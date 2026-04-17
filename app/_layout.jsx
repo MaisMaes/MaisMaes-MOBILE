@@ -30,6 +30,11 @@ export default function RootLayout() {
         name="StartPage"
         options={{ animation: "slide_from_bottom", gestureEnabled: true }}
       />
+      <Stack.Screen
+        name="criar-grupo"
+        options={{ animation: "slide_from_right" }}
+      />
     </Stack>
+    
   );
 }
