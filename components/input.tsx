@@ -10,6 +10,7 @@ interface InputProps {
   label: string;
   value?: string;
   onChangeText?: (text: string) => void;
+  required?: boolean;
 }
 
 export default function Input({
@@ -18,12 +19,16 @@ export default function Input({
   label,
   value,
   onChangeText,
+  required = false,
 }: InputProps) {
   const [hidden, setHidden] = useState(secureTextEntry);
 
   return (
     <View style={styles.container}>
-      <AppText style={styles.label}>{label}</AppText>
+      <View style={styles.labelRow}>
+        <AppText style={styles.label}>{label}</AppText>
+        {required && <AppText style={styles.required}>*</AppText>}
+      </View>
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -52,13 +57,23 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: 12,
   },
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
   label: {
     color: Colors.grafite,
     fontSize: GlobalFontSize.subtitle,
     fontWeight: "600",
-    marginBottom: 6,
+    marginBottom: 0,
     marginLeft: 4,
     textAlign: "left",
+  },
+  required: {
+    color: "red",
+    fontSize: GlobalFontSize.subtitle,
+    fontWeight: "600",
+    marginLeft: 2,
   },
   inputContainer: {
     flexDirection: "row",
@@ -71,7 +86,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    height: 44,
+    height: 40,
     color: Colors.grafite,
     fontSize: GlobalFontSize.text,
   },

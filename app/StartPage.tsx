@@ -1,4 +1,5 @@
 import AppText from "@/components/AppText";
+import Cadastro from "@/components/form/Cadastro";
 import Login from "@/components/form/Login";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
 import { LinearGradient } from "expo-linear-gradient";
@@ -53,13 +54,7 @@ export default function StartPage() {
       </LinearGradient>
 
       <View style={styles.formContainer}>
-        {isLogin ? <Login /> : <AppText>Cadastro</AppText>}
-
-        <TouchableOpacity style={styles.button}>
-          <AppText style={styles.buttonText}>
-            {isLogin ? "Login" : "Enviar"}
-          </AppText>
-        </TouchableOpacity>
+        {isLogin ? <Login /> : <Cadastro/>}
       </View>
     </View>
   );
@@ -93,7 +88,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     flex: 1,
-    backgroundColor: Colors.azulClaro,
+    backgroundColor: Colors.branco,
     paddingHorizontal: 40,
     paddingTop: 30,
   },
