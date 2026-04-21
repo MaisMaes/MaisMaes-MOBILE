@@ -11,6 +11,7 @@ interface InputProps {
   value?: string;
   onChangeText?: (text: string) => void;
   required?: boolean;
+  errorMessage?: string;
 }
 
 export default function Input({
@@ -20,6 +21,7 @@ export default function Input({
   value,
   onChangeText,
   required = false,
+  errorMessage,
 }: InputProps) {
   const [hidden, setHidden] = useState(secureTextEntry);
 
@@ -29,7 +31,7 @@ export default function Input({
         <AppText style={styles.label}>{label}</AppText>
         {required && <AppText style={styles.required}>*</AppText>}
       </View>
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, !!errorMessage && styles.inputError]}>
         <TextInput
           style={styles.input}
           placeholder={placeholder}
@@ -48,6 +50,9 @@ export default function Input({
           </TouchableOpacity>
         )}
       </View>
+      {!!errorMessage && (
+        <AppText style={styles.errorMessage}>{errorMessage}</AppText>
+      )}
     </View>
   );
 }
@@ -83,6 +88,15 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 10,
     backgroundColor: Colors.branco,
+  },
+  inputError: {
+    borderColor: "red",
+  },
+  errorMessage: {
+    color: "red",
+    fontSize: 10,
+    marginLeft: 6,
+    marginTop: 0,
   },
   input: {
     flex: 1,
