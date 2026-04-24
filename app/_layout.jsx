@@ -4,9 +4,12 @@ import {
   Poppins_700Bold,
   useFonts,
 } from "@expo-google-fonts/poppins";
+import { LinearGradient } from "expo-linear-gradient";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import Toast from "react-native-toast-message";
+import { StyleSheet } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -24,12 +27,19 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <Stack screenOptions={{ headerShown: false, animation: "simple_push" }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen
-        name="StartPage"
-        options={{ animation: "slide_from_bottom", gestureEnabled: true }}
-      />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false, animation: "simple_push"}}>
+          <Stack.Screen name="index" />
+          <Stack.Screen
+            name="StartPage"
+            options={{ animation: "slide_from_bottom", gestureEnabled: true }}
+          />{" "}
+          <Stack.Screen
+            name="EsqueciSenha"
+            options={{ animation: "ios_from_right", gestureEnabled: true }}
+          />
+      </Stack>
+      <Toast />
+    </>
   );
 }

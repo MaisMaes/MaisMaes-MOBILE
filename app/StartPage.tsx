@@ -4,7 +4,7 @@ import Login from "@/components/form/Login";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRef, useState } from "react";
-import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Animated, StyleSheet, View } from "react-native";
 
 export default function StartPage() {
   const [isLogin, setIsLogin] = useState(true);

@@ -1,9 +1,10 @@
-import AppText from "../AppText";
-import { Colors, GlobalFontSize } from "@/constants/GlobalStyles";
+import { Colors } from "@/constants/GlobalStyles";
 import UsuarioService from "@/service/UsuarioService";
 import { CadastroRequest } from "@/service/model/CadastroRequest";
+import PopupService from "@/utils/PopupService";
 import { useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { View } from "react-native";
+import AppButton from "../AppButton";
 import Input from "../input";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -30,27 +31,23 @@ export default function Cadastro() {
   const validate = (): Record<string, string> => {
     const e: Record<string, string> = {};
 
-    if (!cadastrarData.nome.trim())
-      e.nome = "Nome é obrigatório.";
+    if (!cadastrarData.nome.trim()) e.nome = "Nome é obrigatório.";
 
-    if (!cadastrarData.email.trim())
-      e.email = "Email é obrigatório.";
+    if (!cadastrarData.email.trim()) e.email = "Email é obrigatório.";
     else if (!EMAIL_REGEX.test(cadastrarData.email))
       e.email = "Informe um email válido. Ex: exemplo@dominio.com";
 
-    if (!cadastrarData.senha)
-      e.senha = "Senha é obrigatória.";
+    if (!cadastrarData.senha) e.senha = "Senha é obrigatória.";
     else if (!SENHA_REGEX.test(cadastrarData.senha))
-      e.senha = "Mín. 8 caracteres, 1 maiúsculo, 1 minúsculo, 1 número e 1 especial.";
+      e.senha =
+        "Mín. 8 caracteres, 1 maiúsculo, 1 minúsculo, 1 número e 1 especial.";
 
-    if (!confirmarSenha)
-      e.confirmarSenha = "Confirme sua senha.";
+    if (!confirmarSenha) e.confirmarSenha = "Confirme sua senha.";
     else if (confirmarSenha !== cadastrarData.senha)
       e.confirmarSenha = "As senhas não coincidem.";
 
     const digits = cadastrarData.telefone.replace(/\D/g, "");
-    if (!digits)
-      e.telefone = "Telefone é obrigatório.";
+    if (!digits) e.telefone = "Telefone é obrigatório.";
     else if (digits.length < 11)
       e.telefone = "Telefone inválido. Ex: (00) 90000-0000";
 
@@ -66,8 +63,10 @@ export default function Cadastro() {
     }
     try {
       const response = await UsuarioService.cadastrar(cadastrarData);
+      PopupService.success("Cadastro realizado com sucesso!");
       console.log("Token:", response.token);
     } catch (error) {
+      PopupService.error("Falha no cadastro. Verifique suas informações.");
       console.error("Erro no cadastro:", error);
     }
   };
@@ -79,7 +78,9 @@ export default function Cadastro() {
         placeholder="Digite seu nome"
         required
         value={cadastrarData.nome}
-        onChangeText={(text) => setCadastrarData({ ...cadastrarData, nome: text })}
+        onChangeText={(text) =>
+          setCadastrarData({ ...cadastrarData, nome: text })
+        }
         errorMessage={errors.nome}
       />
       <Input
@@ -87,7 +88,9 @@ export default function Cadastro() {
         placeholder="Digite seu email"
         required
         value={cadastrarData.email}
-        onChangeText={(text) => setCadastrarData({ ...cadastrarData, email: text })}
+        onChangeText={(text) =>
+          setCadastrarData({ ...cadastrarData, email: text })
+        }
         errorMessage={errors.email}
       />
       <Input
@@ -96,7 +99,9 @@ export default function Cadastro() {
         secureTextEntry
         required
         value={cadastrarData.senha}
-        onChangeText={(text) => setCadastrarData({ ...cadastrarData, senha: text })}
+        onChangeText={(text) =>
+          setCadastrarData({ ...cadastrarData, senha: text })
+        }
         errorMessage={errors.senha}
       />
       <Input
@@ -118,26 +123,12 @@ export default function Cadastro() {
         }
         errorMessage={errors.telefone}
       />
-      <TouchableOpacity style={styles.button} onPress={handleCadastro}>
-        <AppText style={styles.buttonText}>Enviar</AppText>
-      </TouchableOpacity>
+      <AppButton
+        text="Enviar"
+        backgroundColor={Colors.roxo}
+        onPress={handleCadastro}
+        style={{ marginTop: 10 }}
+      />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  button: {
-    backgroundColor: Colors.roxo,
-    paddingVertical: 15,
-    borderRadius: 24,
-    alignItems: "center",
-    marginTop: 10,
-    width: "100%",
-    alignSelf: "center",
-  },
-  buttonText: {
-    color: Colors.branco,
-    fontSize: GlobalFontSize.title,
-    fontWeight: "bold",
-  },
-});
