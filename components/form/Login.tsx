@@ -4,7 +4,7 @@ import AuthService from "@/service/AuthService";
 import { LoginRequest } from "@/service/model/LoginRequest";
 import TokenService from "@/service/TokenService";
 import PopupService from "@/utils/PopupService";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import AppButton from "../AppButton";
@@ -18,7 +18,7 @@ export default function Login() {
     senha: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-
+  const navigate = useRouter();
   const validate = (): Record<string, string> => {
     const e: Record<string, string> = {};
 
@@ -42,6 +42,7 @@ export default function Login() {
       const response = await AuthService.login(loginData);
       await TokenService.saveToken(response.token);
       PopupService.success("Login realizado com sucesso!");
+      setTimeout(() => navigate.replace("/GrupoPage"), 2000);
     } catch (error) {
       console.error("Erro no login:", error);
       PopupService.error("Falha no login. Verifique suas credenciais.");

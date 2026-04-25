@@ -1,0 +1,30 @@
+import api from "../api";
+import { CriarGrupoRequest } from "./model/CriarGrupoRequest";
+import { ListarGrupoTematicoDTO } from "./model/ListarGrupoTematicoDTO";
+
+class GrupoTematicoService {
+  private BASE_URL = "grupo-tematico";
+
+  async criar(data: CriarGrupoRequest): Promise<void> {
+    await api.post(`${this.BASE_URL}/criar`, data);
+  }
+
+  async listar(): Promise<ListarGrupoTematicoDTO[]> {
+    const response = await api.get<ListarGrupoTematicoDTO[]>(
+      `${this.BASE_URL}/listar`,
+    );
+    return response.data;
+  }
+
+  async pesquisar(termo: string): Promise<ListarGrupoTematicoDTO[]> {
+    const response = await api.get<ListarGrupoTematicoDTO[]>(
+      `${this.BASE_URL}/pesquisar`,
+      {
+        params: { termo },
+      },
+    );
+    return response.data;
+  }
+}
+
+export default new GrupoTematicoService();

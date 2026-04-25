@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Platform,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -17,15 +16,18 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AppText from "@/components/AppText";
 import CardGrupo from "@/components/CardGrupo";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
+import GrupoTematicoService from "@/service/GrupoTematicoService";
+import { ListarGrupoTematicoDTO } from "@/service/model/ListarGrupoTematicoDTO";
 
-interface ListarGrupoTematicoDTO {
-  id: number;
-  titulo: string;
-  descricao: string;
-  bairros: string[];
-}
-
-const CATEGORIAS = ["SAUDE", "EDUCACAO", "LAZER", "ALIMENTACAO", "FINANCAS", "TRABALHO", "OUTROS"];
+const CATEGORIAS = [
+  "SAUDE",
+  "EDUCACAO",
+  "LAZER",
+  "ALIMENTACAO",
+  "FINANCAS",
+  "TRABALHO",
+  "OUTROS",
+];
 
 export default function GrupoPage() {
   const router = useRouter();
@@ -38,18 +40,10 @@ export default function GrupoPage() {
   const carregarDados = async (termo = "") => {
     try {
       setCarregando(true);
-      const host = Platform.OS === "android" ? "10.0.2.2" : "localhost";
-      
-      const url = termo 
-        ? `http://${host}:8080/grupo-tematico/pesquisar?termo=${termo}`
-        : `http://${host}:8080/grupo-tematico/listar`;
-
-      const response = await fetch(url);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setGrupos(data);
-      }
+      const data = termo
+        ? await GrupoTematicoService.pesquisar(termo)
+        : await GrupoTematicoService.listar();
+      setGrupos(data);
     } catch (e) {
       console.log("Erro ao buscar dados:", e);
     } finally {
@@ -87,7 +81,10 @@ export default function GrupoPage() {
               onChangeText={setBusca}
               onSubmitEditing={() => carregarDados(busca)}
             />
-            <TouchableOpacity onPress={() => carregarDados(busca)} style={styles.searchButton}>
+            <TouchableOpacity
+              onPress={() => carregarDados(busca)}
+              style={styles.searchButton}
+            >
               <Ionicons name="search" size={20} color={Colors.branco} />
             </TouchableOpacity>
           </View>
@@ -100,14 +97,16 @@ export default function GrupoPage() {
                 key={cat}
                 style={[
                   styles.categoryPill,
-                  categoriaAtiva === cat && styles.categoryPillActive
+                  categoriaAtiva === cat && styles.categoryPillActive,
                 ]}
                 onPress={() => handleCategoriaPress(cat)}
               >
-                <AppText style={[
-                  styles.categoryText,
-                  categoriaAtiva === cat && styles.categoryTextActive
-                ]}>
+                <AppText
+                  style={[
+                    styles.categoryText,
+                    categoriaAtiva === cat && styles.categoryTextActive,
+                  ]}
+                >
                   {cat}
                 </AppText>
               </TouchableOpacity>

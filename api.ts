@@ -10,12 +10,13 @@ const api = axios.create({
   },
 });
 
-// api.interceptors.request.use(async (config) => {
-//   const token = await TokenService.getToken();
-//   if (token) {
-//     config.headers.Authorization = `Bearer ${token}`;
-//   }
-//   return config;
-// });
+api.interceptors.request.use(async (config) => {
+  const token = await TokenService.getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  console.log("Requisição:", config.method?.toUpperCase(), config.url);
+  return config;
+});
 
 export default api;

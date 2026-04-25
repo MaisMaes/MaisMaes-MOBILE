@@ -2,33 +2,64 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
-  Platform,
   ScrollView,
   StyleSheet,
   Switch,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 
 import AppText from "@/components/AppText";
 import { Colors, Fonts } from "@/constants/GlobalStyles";
+import GrupoTematicoService from "@/service/GrupoTematicoService";
+import PopupService from "@/utils/PopupService";
 
-const CATEGORIAS = ["SAUDE", "EDUCACAO", "LAZER", "ALIMENTACAO", "FINANCAS", "TRABALHO", "OUTROS"];
+const CATEGORIAS = [
+  "SAUDE",
+  "EDUCACAO",
+  "LAZER",
+  "ALIMENTACAO",
+  "FINANCAS",
+  "TRABALHO",
+  "OUTROS",
+];
 
 const LISTA_BAIRROS = [
-  "BARRA_DE_JANGADA", "CANDEIAS", "PIEDADE", "JARDIM_PIEDADE", "PRAZERES", 
-  "CAJUEIRO_SECO", "COMPORTAS", "GUARARAPES", "JARDIM_JORDAO", "CAVALEIRO", 
-  "DOIS_CARNEIROS", "SUCUPIRA", "ZUMBI_DO_PACHECO", "CURADO_I", "CURADO_II", 
-  "CURADO_III", "CURADO_IV", "MURIBECA", "MARCOS_FREIRE", "CENTRO", 
-  "VILA_RICA", "VISTA_ALEGRE", "SOCORRO", "SANTO_ALEIXO", "ENGENHO_VELHO", 
-  "MANASSU", "FLORIANO", "SANTANA", "VARGEM_FRIA"
+  "BARRA_DE_JANGADA",
+  "CANDEIAS",
+  "PIEDADE",
+  "JARDIM_PIEDADE",
+  "PRAZERES",
+  "CAJUEIRO_SECO",
+  "COMPORTAS",
+  "GUARARAPES",
+  "JARDIM_JORDAO",
+  "CAVALEIRO",
+  "DOIS_CARNEIROS",
+  "SUCUPIRA",
+  "ZUMBI_DO_PACHECO",
+  "CURADO_I",
+  "CURADO_II",
+  "CURADO_III",
+  "CURADO_IV",
+  "MURIBECA",
+  "MARCOS_FREIRE",
+  "CENTRO",
+  "VILA_RICA",
+  "VISTA_ALEGRE",
+  "SOCORRO",
+  "SANTO_ALEIXO",
+  "ENGENHO_VELHO",
+  "MANASSU",
+  "FLORIANO",
+  "SANTANA",
+  "VARGEM_FRIA",
 ];
 
 export default function CriarGrupoForm() {
   const router = useRouter();
-  
+
   // Estados do Formulário
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -37,7 +68,7 @@ export default function CriarGrupoForm() {
   const [bairrosSelecionados, setBairrosSelecionados] = useState<string[]>([]);
   const [participantes, setParticipantes] = useState("100");
   const [tempoMensagens, setTempoMensagens] = useState("0");
-  
+
   // Controle de UI
   const [showBairros, setShowBairros] = useState(false);
 
@@ -48,61 +79,57 @@ export default function CriarGrupoForm() {
   const [documento, setDocumento] = useState(false);
 
   const toggleBairro = (bairro: string) => {
-    setBairrosSelecionados(prev => 
-      prev.includes(bairro) ? prev.filter(b => b !== bairro) : [...prev, bairro]
+    setBairrosSelecionados((prev) =>
+      prev.includes(bairro)
+        ? prev.filter((b) => b !== bairro)
+        : [...prev, bairro],
     );
   };
 
   const handleCriar = async () => {
     if (!nome || !descricao || bairrosSelecionados.length === 0) {
-      Alert.alert("Atenção", "Preencha o nome, descrição e selecione ao menos um bairro.");
+      PopupService.info(
+        "Preencha o nome, descrição e selecione ao menos um bairro.",
+      );
       return;
     }
 
-    const host = Platform.OS === "android" ? "10.0.2.2" : "localhost";
-    const body = {
-      titulo: nome,
-      descricao,
-      categorias: categoria,
-      bairros: bairrosSelecionados,
-      privado,
-      numeroParticipantes: Number(participantes),
-      tempoEntreMensagens: Number(tempoMensagens),
-      video,
-      audio,
-      imagem,
-      documento,
-    };
-
     try {
-      const response = await fetch(`http://${host}:8080/grupo-tematico/criar`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+      await GrupoTematicoService.criar({
+        titulo: nome,
+        descricao,
+        categorias: categoria,
+        bairros: bairrosSelecionados,
+        privado,
+        numeroParticipantes: Number(participantes),
+        tempoEntreMensagens: Number(tempoMensagens),
+        video,
+        audio,
+        imagem,
+        documento,
       });
-
-      if (response.ok) {
-        Alert.alert("Sucesso", "Grupo criado com sucesso!");
-        router.back();
-      } else {
-        Alert.alert("Erro", "Não foi possível criar o grupo.");
-      }
-    } catch (error) {
-      Alert.alert("Erro", "Falha na conexão com o servidor.");
+      PopupService.success("Grupo criado com sucesso!");
+      router.back();
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.error ?? "Não foi possível criar o grupo.";
+      PopupService.error(message);
     }
   };
 
   return (
     <View style={styles.mainContainer}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-        
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
         {/* Nome do Grupo */}
-        <TextInput 
-          placeholder="Nome do grupo" 
+        <TextInput
+          placeholder="Nome do grupo"
           placeholderTextColor={Colors.cinzaClaro}
-          value={nome} 
-          onChangeText={setNome} 
-          style={styles.input} 
+          value={nome}
+          onChangeText={setNome}
+          style={styles.input}
         />
 
         {/* Descrição */}
@@ -117,43 +144,57 @@ export default function CriarGrupoForm() {
 
         <View style={styles.selectorBox}>
           <AppText style={styles.label}>Grupo Privado</AppText>
-          <Switch 
-            value={privado} 
-            onValueChange={setPrivado} 
+          <Switch
+            value={privado}
+            onValueChange={setPrivado}
             trackColor={{ false: Colors.branco, true: Colors.roxo + "77" }}
             thumbColor={privado ? Colors.roxo : Colors.branco}
           />
         </View>
 
         {/*Bairros */}
-        <TouchableOpacity 
-          style={styles.selectorBox} 
+        <TouchableOpacity
+          style={styles.selectorBox}
           onPress={() => setShowBairros(!showBairros)}
           activeOpacity={0.7}
         >
           <AppText style={styles.label}>
-            {bairrosSelecionados.length > 0 
-              ? `${bairrosSelecionados.length} bairro(s) selecionado(s)` 
+            {bairrosSelecionados.length > 0
+              ? `${bairrosSelecionados.length} bairro(s) selecionado(s)`
               : "Selecione os bairros"}
           </AppText>
-          <Ionicons 
-            name={showBairros ? "chevron-up-circle-outline" : "chevron-down-circle-outline"} 
-            size={24} 
-            color={Colors.roxo} 
+          <Ionicons
+            name={
+              showBairros
+                ? "chevron-up-circle-outline"
+                : "chevron-down-circle-outline"
+            }
+            size={24}
+            color={Colors.roxo}
           />
         </TouchableOpacity>
-        
+
         {showBairros && (
           <View style={styles.dropdown}>
             <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
-              {LISTA_BAIRROS.map(b => (
-                <TouchableOpacity key={b} style={styles.dropOption} onPress={() => toggleBairro(b)}>
-                  <Ionicons 
-                    name={bairrosSelecionados.includes(b) ? "checkbox" : "square-outline"} 
-                    size={20} 
-                    color={Colors.roxo} 
+              {LISTA_BAIRROS.map((b) => (
+                <TouchableOpacity
+                  key={b}
+                  style={styles.dropOption}
+                  onPress={() => toggleBairro(b)}
+                >
+                  <Ionicons
+                    name={
+                      bairrosSelecionados.includes(b)
+                        ? "checkbox"
+                        : "square-outline"
+                    }
+                    size={20}
+                    color={Colors.roxo}
                   />
-                  <AppText style={styles.dropText}>{b.replace(/_/g, ' ')}</AppText>
+                  <AppText style={styles.dropText}>
+                    {b.replace(/_/g, " ")}
+                  </AppText>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -162,14 +203,26 @@ export default function CriarGrupoForm() {
 
         {/* Categoria */}
         <AppText style={styles.sectionTitle}>Selecione a categoria</AppText>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.catScroll}
+        >
           {CATEGORIAS.map((cat) => (
-            <TouchableOpacity 
-              key={cat} 
+            <TouchableOpacity
+              key={cat}
               onPress={() => setCategoria(cat)}
-              style={[styles.catPill, categoria === cat && styles.catPillActive]}
+              style={[
+                styles.catPill,
+                categoria === cat && styles.catPillActive,
+              ]}
             >
-              <AppText style={[styles.catText, categoria === cat && { color: Colors.branco }]}>
+              <AppText
+                style={[
+                  styles.catText,
+                  categoria === cat && { color: Colors.branco },
+                ]}
+              >
                 {cat}
               </AppText>
             </TouchableOpacity>
@@ -199,24 +252,23 @@ export default function CriarGrupoForm() {
         <View style={styles.inputGroupRow}>
           <View style={styles.inputHalf}>
             <AppText style={styles.labelSmall}>Máximo participantes:</AppText>
-            <TextInput 
-              value={participantes} 
-              onChangeText={setParticipantes} 
-              keyboardType="numeric" 
-              style={styles.inputSmall} 
+            <TextInput
+              value={participantes}
+              onChangeText={setParticipantes}
+              keyboardType="numeric"
+              style={styles.inputSmall}
             />
           </View>
           <View style={styles.inputHalf}>
             <AppText style={styles.labelSmall}>Tempo msgs (min):</AppText>
-            <TextInput 
-              value={tempoMensagens} 
-              onChangeText={setTempoMensagens} 
-              keyboardType="numeric" 
-              style={styles.inputSmall} 
+            <TextInput
+              value={tempoMensagens}
+              onChangeText={setTempoMensagens}
+              keyboardType="numeric"
+              style={styles.inputSmall}
             />
           </View>
         </View>
-
       </ScrollView>
 
       {/* Botão de Ação */}
@@ -244,12 +296,12 @@ const styles = StyleSheet.create({
   },
   textArea: {
     height: 90,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   selectorBox: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderWidth: 1.5,
     borderColor: Colors.cinzaClaro,
     borderRadius: 25,
@@ -278,8 +330,8 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   dropOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 8,
     borderBottomWidth: 0.5,
     borderBottomColor: Colors.branco,
@@ -288,7 +340,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 13,
     fontFamily: Fonts.regular,
-    textTransform: 'capitalize',
+    textTransform: "capitalize",
   },
   catScroll: {
     marginBottom: 20,
@@ -302,7 +354,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     marginRight: 8,
     height: 35,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   catPillActive: {
     backgroundColor: Colors.roxo,
@@ -313,16 +365,16 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semiBold,
   },
   mediaGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     marginBottom: 10,
   },
   mediaItem: {
-    width: '48%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    width: "48%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: Colors.branco,
     padding: 10,
     borderRadius: 15,
@@ -335,12 +387,12 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
   },
   inputGroupRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 10,
   },
   inputHalf: {
-    width: '48%',
+    width: "48%",
   },
   labelSmall: {
     fontFamily: Fonts.regular,
@@ -353,7 +405,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.cinzaClaro,
     borderRadius: 15,
     padding: 8,
-    textAlign: 'center',
+    textAlign: "center",
     backgroundColor: Colors.branco,
     fontFamily: Fonts.regular,
   },
@@ -361,7 +413,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.roxo,
     paddingVertical: 15,
     borderRadius: 15,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
     marginTop: 10,
   },
