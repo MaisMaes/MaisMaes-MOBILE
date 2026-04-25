@@ -156,15 +156,7 @@ export default function Profile() {
           </TouchableOpacity>
 
         </View>
-        <BottomBar
-          items={[
-            { label: 'Chat', icon: 'chatbubble-outline', href: '/#' },
-            { label: 'Explore', icon: 'compass-outline', href: '/#' },
-            { label: 'Create', icon: 'add-circle-outline', href: '/#' },
-            { label: 'Message', icon: 'notifications-outline', href: '/#' },
-            { label: 'Me', icon: 'person-outline', href: '/profile' },
-          ]}
-        />
+        <BottomBar/>
       </View>
     </>
   )
@@ -175,6 +167,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: Colors.branco
   },
   cancelButton: {
     height: 45,

@@ -3,6 +3,7 @@ import Cadastro from "@/components/form/Cadastro";
 import Login from "@/components/form/Login";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
 import { LinearGradient } from "expo-linear-gradient";
+import { Link } from "expo-router";
 import { useRef, useState } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 
@@ -31,7 +32,7 @@ export default function StartPage() {
   return (
     <View style={{ flex: 1 }}>
       <LinearGradient colors={[Colors.rosa, Colors.azul]} style={styles.header}>
-        <AppText style={styles.title}>+Mães</AppText>
+        <AppText style={styles.title}><Link href="/profile">+Mães</Link></AppText>
 
         <View style={styles.labelsContainer}>
           <View style={{ width: "30%", alignItems: "center" }}>

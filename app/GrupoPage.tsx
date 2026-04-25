@@ -17,6 +17,7 @@ import CardGrupo from "@/components/CardGrupo";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
 import GrupoTematicoService from "@/service/GrupoTematicoService";
 import { ListarGrupoTematicoDTO } from "@/service/model/ListarGrupoTematicoDTO";
+import BottomBar from "@/components/BottomBar";
 
 const CATEGORIAS = [
   "SAUDE",
@@ -174,6 +175,7 @@ export default function GrupoPage() {
           )}
         </ScrollView>
       )}
+      <BottomBar />
     </SafeAreaView>
   );
 }
@@ -181,7 +183,7 @@ export default function GrupoPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.branco,
+    backgroundColor: Colors.branco
   },
   header: {
     height: "10%",
