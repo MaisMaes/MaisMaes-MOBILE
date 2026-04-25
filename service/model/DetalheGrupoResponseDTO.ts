@@ -15,4 +15,5 @@ export interface DetalheGrupoResponseDTO {
   bairros: string[];
   participantes: ParticipanteGrupoResumoResponseDTO[];
   usuarioLogadoEParticipante: boolean;
+  usuarioLogadoRole: string;
 }

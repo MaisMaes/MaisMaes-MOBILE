@@ -3,6 +3,7 @@ import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
 import GrupoTematicoService from "@/service/GrupoTematicoService";
 import PopupService from "@/utils/PopupService";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface CardGrupoProps {
@@ -14,63 +15,79 @@ interface CardGrupoProps {
   onPress?: () => void;
 }
 
-export default function CardGrupo({ 
+export default function CardGrupo({
   id,
-  titulo, 
-  descricao, 
-  bairros, 
-  isFavorito = false, 
-  onPress
+  titulo,
+  descricao,
+  bairros,
+  isFavorito = false,
+  onPress,
 }: CardGrupoProps) {
+  const router = useRouter();
+
+  const handlePress = () => {
+    if (onPress) {
+      onPress();
+    } else {
+      router.push({
+        pathname: "/DetalheGrupoPage",
+        params: { id: id.toString() },
+      });
+    }
+  };
 
   const onAddPress = async () => {
     try {
       await GrupoTematicoService.participar(id);
       PopupService.success("Você entrou no grupo com sucesso!");
     } catch (error: any) {
-      const message = error?.response?.data?.error ?? "Erro ao tentar entrar no grupo. Tente novamente.";
+      const message =
+        error?.response?.data?.error ??
+        "Erro ao tentar entrar no grupo. Tente novamente.";
       PopupService.error(message);
     }
-  }
+  };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
-      
+    <TouchableOpacity
+      style={styles.card}
+      onPress={handlePress}
+      activeOpacity={0.8}
+    >
       <View style={styles.iconContainer}>
         <Ionicons name="chatbubble-outline" size={28} color={Colors.grafite} />
       </View>
 
       <View style={styles.infoContainer}>
         <AppText style={styles.titulo}>{titulo}</AppText>
-        
+
         <AppText style={styles.descricao} numberOfLines={2}>
           {descricao}
         </AppText>
 
         {bairros && bairros.length > 0 && (
-        <View style={styles.bairrosWrapper}>
-          <AppText style={styles.bairroText} numberOfLines={1}>
-            {bairros.slice(0, 3).join(", ")}
-            {bairros.length > 3 ? "..." : ""}
-          </AppText>
-        </View>
-      )}
+          <View style={styles.bairrosWrapper}>
+            <AppText style={styles.bairroText} numberOfLines={1}>
+              {bairros.slice(0, 3).join(", ")}
+              {bairros.length > 3 ? "..." : ""}
+            </AppText>
+          </View>
+        )}
       </View>
 
       <View style={styles.actionsContainer}>
         <TouchableOpacity>
-          <Ionicons 
-            name={isFavorito ? "heart" : "heart-outline"} 
+          <Ionicons
+            name={isFavorito ? "heart" : "heart-outline"}
             size={26}
-            color={isFavorito ? Colors.rosa : Colors.cinzaClaro} 
+            color={isFavorito ? Colors.rosa : Colors.cinzaClaro}
           />
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.addButton} onPress={onAddPress}>
           <Ionicons name="add" size={26} color={Colors.branco} />
         </TouchableOpacity>
       </View>
-
     </TouchableOpacity>
   );
 }
@@ -104,17 +121,17 @@ const styles = StyleSheet.create({
   infoContainer: {
     flex: 1,
     paddingHorizontal: 12,
-    justifyContent: 'center',
-    overflow: 'hidden', // Evita que o texto saia do limite
+    justifyContent: "center",
+    overflow: "hidden", // Evita que o texto saia do limite
   },
   titulo: {
     fontFamily: Fonts.semiBold,
-    fontSize: GlobalFontSize.subtitle, 
+    fontSize: GlobalFontSize.subtitle,
     color: Colors.grafite,
   },
   descricao: {
     fontFamily: Fonts.regular,
-    fontSize: GlobalFontSize.text, 
+    fontSize: GlobalFontSize.text,
     color: Colors.cinzaClaro,
     marginTop: 2,
   },
@@ -129,7 +146,7 @@ const styles = StyleSheet.create({
   bairrosWrapper: {
     flexDirection: "row",
     marginTop: 4,
-    alignItems: 'center',
+    alignItems: "center",
   },
   actionsContainer: {
     justifyContent: "space-between",

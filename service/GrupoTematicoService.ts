@@ -1,6 +1,7 @@
 import api from "../api";
 import { CriarGrupoRequest } from "./model/CriarGrupoRequest";
 import { DetalheGrupoResponseDTO } from "./model/DetalheGrupoResponseDTO";
+import { EditarGrupoRequest } from "./model/EditarGrupoRequest";
 import { ListarGrupoTematicoDTO } from "./model/ListarGrupoTematicoDTO";
 
 class GrupoTematicoService {
@@ -40,9 +41,17 @@ class GrupoTematicoService {
 
   async buscarDetalhes(id: number): Promise<DetalheGrupoResponseDTO> {
     const response = await api.get<DetalheGrupoResponseDTO>(
-      `${this.BASE_URL}/${id}`,
+      `${this.BASE_URL}/detalhes/${id}`,
     );
     return response.data;
+  }
+
+  async editar(id: number, data: EditarGrupoRequest): Promise<void> {
+    await api.put(`${this.BASE_URL}/editar/${id}`, data);
+  }
+
+  async excluir(id: number): Promise<void> {
+    await api.delete(`${this.BASE_URL}/excluir/${id}`);
   }
 }
 
