@@ -40,6 +40,10 @@ export default function RootLayout() {
             name="criar-grupo"
             options={{ animation: "slide_from_right" }}
           />
+          <Stack.Screen
+            name="Grupos"
+            options={{ animation: "slide_from_right" }}
+          />
       </Stack>
       <Toast />
     </>
