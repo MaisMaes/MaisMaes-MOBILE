@@ -1,5 +1,6 @@
 import api from "../api";
 import { CriarGrupoRequest } from "./model/CriarGrupoRequest";
+import { DetalheGrupoResponseDTO } from "./model/DetalheGrupoResponseDTO";
 import { ListarGrupoTematicoDTO } from "./model/ListarGrupoTematicoDTO";
 
 class GrupoTematicoService {
@@ -33,6 +34,13 @@ class GrupoTematicoService {
   async listarMeusGrupos(): Promise<ListarGrupoTematicoDTO[]> {
     const response = await api.get<ListarGrupoTematicoDTO[]>(
       `${this.BASE_URL}/meus-grupos`,
+    );
+    return response.data;
+  }
+
+  async buscarDetalhes(id: number): Promise<DetalheGrupoResponseDTO> {
+    const response = await api.get<DetalheGrupoResponseDTO>(
+      `${this.BASE_URL}/${id}`,
     );
     return response.data;
   }
