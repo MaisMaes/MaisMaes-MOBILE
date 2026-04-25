@@ -1,4 +1,5 @@
 import { Colors } from "@/constants/GlobalStyles";
+import TokenService from "@/service/TokenService";
 import UsuarioService from "@/service/UsuarioService";
 import { CadastroRequest } from "@/service/model/CadastroRequest";
 import PopupService from "@/utils/PopupService";
@@ -63,8 +64,8 @@ export default function Cadastro() {
     }
     try {
       const response = await UsuarioService.cadastrar(cadastrarData);
+      await TokenService.saveToken(response.token);
       PopupService.success("Cadastro realizado com sucesso!");
-      console.log("Token:", response.token);
     } catch (error) {
       PopupService.error("Falha no cadastro. Verifique suas informações.");
       console.error("Erro no cadastro:", error);

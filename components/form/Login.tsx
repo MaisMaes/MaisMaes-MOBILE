@@ -2,6 +2,7 @@ import AppText from "@/components/AppText";
 import { Colors, GlobalFontSize } from "@/constants/GlobalStyles";
 import AuthService from "@/service/AuthService";
 import { LoginRequest } from "@/service/model/LoginRequest";
+import TokenService from "@/service/TokenService";
 import PopupService from "@/utils/PopupService";
 import { Link } from "expo-router";
 import { useState } from "react";
@@ -39,6 +40,7 @@ export default function Login() {
     }
     try {
       const response = await AuthService.login(loginData);
+      await TokenService.saveToken(response.token);
       PopupService.success("Login realizado com sucesso!");
     } catch (error) {
       console.error("Erro no login:", error);
