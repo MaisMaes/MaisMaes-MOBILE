@@ -66,8 +66,10 @@ export default function Cadastro() {
       const response = await UsuarioService.cadastrar(cadastrarData);
       await TokenService.saveToken(response.token);
       PopupService.success("Cadastro realizado com sucesso!");
-    } catch (error) {
-      PopupService.error("Falha no cadastro. Verifique suas informações.");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.error ?? "Falha no cadastro. Tente novamente.";
+      PopupService.error(message || "Falha no cadastro. Tente novamente.");
       console.error("Erro no cadastro:", error);
     }
   };
