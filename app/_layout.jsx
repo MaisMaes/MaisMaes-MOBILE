@@ -4,12 +4,10 @@ import {
   Poppins_700Bold,
   useFonts,
 } from "@expo-google-fonts/poppins";
-import { LinearGradient } from "expo-linear-gradient";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import Toast from "react-native-toast-message";
-import { StyleSheet } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,8 +36,13 @@ export default function RootLayout() {
             name="EsqueciSenha"
             options={{ animation: "ios_from_right", gestureEnabled: true }}
           />
+          <Stack.Screen
+            name="criar-grupo"
+            options={{ animation: "slide_from_right" }}
+          />
       </Stack>
       <Toast />
     </>
+    
   );
 }
