@@ -1,0 +1,225 @@
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import AppText from "@/components/AppText";
+import CardGrupo from "@/components/CardGrupo";
+import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
+
+interface ListarGrupoTematicoDTO {
+  id: number;
+  titulo: string;
+  descricao: string;
+  bairros: string[];
+}
+
+const CATEGORIAS = ["SAUDE", "EDUCACAO", "LAZER", "ALIMENTACAO", "FINANCAS", "TRABALHO", "OUTROS"];
+
+export default function GrupoPage() {
+  const router = useRouter();
+  const [grupos, setGrupos] = useState<ListarGrupoTematicoDTO[]>([]);
+  const [carregando, setCarregando] = useState(true);
+
+  const [busca, setBusca] = useState("");
+  const [categoriaAtiva, setCategoriaAtiva] = useState("");
+
+  const carregarDados = async (termo = "") => {
+    try {
+      setCarregando(true);
+      const host = Platform.OS === "android" ? "10.0.2.2" : "localhost";
+      
+      const url = termo 
+        ? `http://${host}:8080/grupo-tematico/pesquisar?termo=${termo}`
+        : `http://${host}:8080/grupo-tematico/listar`;
+
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setGrupos(data);
+      }
+    } catch (e) {
+      console.log("Erro ao buscar dados:", e);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarDados();
+  }, []);
+
+  const handleCategoriaPress = (cat: string) => {
+    const novaCat = categoriaAtiva === cat ? "" : cat;
+    setCategoriaAtiva(novaCat);
+    carregarDados(novaCat);
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <AppText style={styles.headerTitle}>Grupos</AppText>
+      </View>
+
+      <View style={styles.searchSection}>
+        <View style={styles.searchRow}>
+          <TouchableOpacity onPress={() => router.push("/CriarGrupoPage")}>
+            <Ionicons name="add-circle" size={50} color={Colors.azulEscuro} />
+          </TouchableOpacity>
+
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.input}
+              placeholder="Pesquisar..."
+              value={busca}
+              onChangeText={setBusca}
+              onSubmitEditing={() => carregarDados(busca)}
+            />
+            <TouchableOpacity onPress={() => carregarDados(busca)} style={styles.searchButton}>
+              <Ionicons name="search" size={20} color={Colors.branco} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.categoriesContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {CATEGORIAS.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[
+                  styles.categoryPill,
+                  categoriaAtiva === cat && styles.categoryPillActive
+                ]}
+                onPress={() => handleCategoriaPress(cat)}
+              >
+                <AppText style={[
+                  styles.categoryText,
+                  categoriaAtiva === cat && styles.categoryTextActive
+                ]}>
+                  {cat}
+                </AppText>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+
+      {carregando ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={Colors.roxo} />
+        </View>
+      ) : (
+        <FlatList
+          data={grupos}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.list}
+          renderItem={({ item }) => (
+            <CardGrupo
+              titulo={item.titulo}
+              descricao={item.descricao}
+              bairros={item.bairros}
+            />
+          )}
+        />
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.branco,
+  },
+  header: {
+    height: "10%",
+    alignItems: "center",
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    justifyContent: "flex-end",
+    backgroundColor: Colors.roxo,
+    paddingRight: 30,
+  },
+  headerTitle: {
+    fontSize: GlobalFontSize.title,
+    fontFamily: Fonts.bold,
+    color: Colors.branco,
+  },
+
+  searchSection: {
+    paddingHorizontal: 20,
+    paddingTop: 15,
+  },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  inputWrapper: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: Colors.azulEscuro,
+    borderRadius: 25,
+    height: 48,
+    marginLeft: 10,
+    paddingLeft: 15,
+    paddingRight: 5,
+  },
+  input: {
+    flex: 1,
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+  },
+  searchButton: {
+    backgroundColor: Colors.azulEscuro,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  categoriesContainer: {
+    marginBottom: 10,
+  },
+  categoryPill: {
+    backgroundColor: Colors.azulClaro,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginRight: 8,
+  },
+  categoryPillActive: {
+    backgroundColor: Colors.azulEscuro,
+  },
+  categoryText: {
+    fontSize: 12,
+    fontFamily: Fonts.semiBold,
+    color: Colors.azulEscuro,
+  },
+  categoryTextActive: {
+    color: Colors.branco,
+  },
+  // FIM ESTILOS BUSCA
+  list: {
+    padding: 20,
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
