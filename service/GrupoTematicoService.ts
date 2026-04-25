@@ -25,6 +25,17 @@ class GrupoTematicoService {
     );
     return response.data;
   }
+
+  async participar(grupoId: number): Promise<void> {
+    await api.post(`${this.BASE_URL}/${grupoId}/entrar`);
+  }
+
+  async listarMeusGrupos(): Promise<ListarGrupoTematicoDTO[]> {
+    const response = await api.get<ListarGrupoTematicoDTO[]>(
+      `${this.BASE_URL}/meus-grupos`,
+    );
+    return response.data;
+  }
 }
 
 export default new GrupoTematicoService();

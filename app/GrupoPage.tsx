@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -32,7 +31,9 @@ const CATEGORIAS = [
 export default function GrupoPage() {
   const router = useRouter();
   const [grupos, setGrupos] = useState<ListarGrupoTematicoDTO[]>([]);
+  const [meusGrupos, setMeusGrupos] = useState<ListarGrupoTematicoDTO[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [carregandoMeus, setCarregandoMeus] = useState(true);
 
   const [busca, setBusca] = useState("");
   const [categoriaAtiva, setCategoriaAtiva] = useState("");
@@ -51,8 +52,21 @@ export default function GrupoPage() {
     }
   };
 
+  const carregarMeusGrupos = async () => {
+    try {
+      setCarregandoMeus(true);
+      const data = await GrupoTematicoService.listarMeusGrupos();
+      setMeusGrupos(data);
+    } catch (e) {
+      console.log("Erro ao buscar meus grupos:", e);
+    } finally {
+      setCarregandoMeus(false);
+    }
+  };
+
   useEffect(() => {
     carregarDados();
+    carregarMeusGrupos();
   }, []);
 
   const handleCategoriaPress = (cat: string) => {
@@ -115,23 +129,50 @@ export default function GrupoPage() {
         </View>
       </View>
 
-      {carregando ? (
+      {carregando && carregandoMeus ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={Colors.roxo} />
         </View>
       ) : (
-        <FlatList
-          data={grupos}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <CardGrupo
-              titulo={item.titulo}
-              descricao={item.descricao}
-              bairros={item.bairros}
-            />
+        <ScrollView contentContainerStyle={styles.list}>
+          <AppText style={styles.sectionTitle}>Estou participando</AppText>
+          {carregandoMeus ? (
+            <ActivityIndicator size="small" color={Colors.roxo} />
+          ) : meusGrupos.length === 0 ? (
+            <AppText style={styles.emptyText}>
+              Você ainda não participa de nenhum grupo.
+            </AppText>
+          ) : (
+            meusGrupos.map((item) => (
+              <CardGrupo
+                key={item.id}
+                id={item.id}
+                titulo={item.titulo}
+                descricao={item.descricao}
+                bairros={item.bairros}
+              />
+            ))
           )}
-        />
+
+          <AppText style={[styles.sectionTitle, { marginTop: 20 }]}>
+            Outros grupos
+          </AppText>
+          {carregando ? (
+            <ActivityIndicator size="small" color={Colors.roxo} />
+          ) : grupos.length === 0 ? (
+            <AppText style={styles.emptyText}>Nenhum grupo encontrado.</AppText>
+          ) : (
+            grupos.map((item) => (
+              <CardGrupo
+                key={item.id}
+                id={item.id}
+                titulo={item.titulo}
+                descricao={item.descricao}
+                bairros={item.bairros}
+              />
+            ))
+          )}
+        </ScrollView>
       )}
     </SafeAreaView>
   );
@@ -215,6 +256,18 @@ const styles = StyleSheet.create({
   // FIM ESTILOS BUSCA
   list: {
     padding: 20,
+  },
+  sectionTitle: {
+    fontFamily: Fonts.bold,
+    fontSize: GlobalFontSize.subtitle,
+    color: Colors.grafite,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontFamily: Fonts.regular,
+    fontSize: GlobalFontSize.text,
+    color: Colors.cinzaClaro,
+    marginBottom: 10,
   },
   center: {
     flex: 1,

@@ -1,25 +1,38 @@
 import AppText from "@/components/AppText";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
+import GrupoTematicoService from "@/service/GrupoTematicoService";
+import PopupService from "@/utils/PopupService";
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface CardGrupoProps {
+  id: number;
   titulo: string;
   descricao: string;
   bairros?: string[];
   isFavorito?: boolean;
   onPress?: () => void;
-  onAddPress?: () => void;
 }
 
 export default function CardGrupo({ 
+  id,
   titulo, 
   descricao, 
   bairros, 
   isFavorito = false, 
-  onPress,
-  onAddPress 
+  onPress
 }: CardGrupoProps) {
+
+  const onAddPress = async () => {
+    try {
+      await GrupoTematicoService.participar(id);
+      PopupService.success("Você entrou no grupo com sucesso!");
+    } catch (error: any) {
+      const message = error?.response?.data?.error ?? "Erro ao tentar entrar no grupo. Tente novamente.";
+      PopupService.error(message);
+    }
+  }
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
       
