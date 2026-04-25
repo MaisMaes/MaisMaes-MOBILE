@@ -1,74 +1,111 @@
-import AppText from "@/components/AppText";
-import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
-import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
-    ScrollView,
-    StyleSheet,
-    Switch,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 
-const CATEGORIAS = [
-  "SAUDE",
-  "EDUCACAO",
-  "LAZER",
-  "ALIMENTACAO",
-  "FINANCAS",
-  "TRABALHO",
-  "OUTROS",
+import AppText from "@/components/AppText";
+import { Colors, Fonts } from "@/constants/GlobalStyles";
+
+const CATEGORIAS = ["SAUDE", "EDUCACAO", "LAZER", "ALIMENTACAO", "FINANCAS", "TRABALHO", "OUTROS"];
+
+const LISTA_BAIRROS = [
+  "BARRA_DE_JANGADA", "CANDEIAS", "PIEDADE", "JARDIM_PIEDADE", "PRAZERES", 
+  "CAJUEIRO_SECO", "COMPORTAS", "GUARARAPES", "JARDIM_JORDAO", "CAVALEIRO", 
+  "DOIS_CARNEIROS", "SUCUPIRA", "ZUMBI_DO_PACHECO", "CURADO_I", "CURADO_II", 
+  "CURADO_III", "CURADO_IV", "MURIBECA", "MARCOS_FREIRE", "CENTRO", 
+  "VILA_RICA", "VISTA_ALEGRE", "SOCORRO", "SANTO_ALEIXO", "ENGENHO_VELHO", 
+  "MANASSU", "FLORIANO", "SANTANA", "VARGEM_FRIA"
 ];
 
 export default function CriarGrupoForm() {
+  const router = useRouter();
+  
+  // Estados do Formulário
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [privado, setPrivado] = useState(false);
-  const [bairro, setBairro] = useState("");
-  const [categoria, setCategoria] = useState("");
+  const [categoria, setCategoria] = useState("OUTROS");
+  const [bairrosSelecionados, setBairrosSelecionados] = useState<string[]>([]);
   const [participantes, setParticipantes] = useState("100");
+  const [tempoMensagens, setTempoMensagens] = useState("0");
+  
+  // Controle de UI
+  const [showBairros, setShowBairros] = useState(false);
 
+  // Estados de Mídia
   const [video, setVideo] = useState(false);
   const [audio, setAudio] = useState(false);
   const [imagem, setImagem] = useState(false);
   const [documento, setDocumento] = useState(false);
 
+  const toggleBairro = (bairro: string) => {
+    setBairrosSelecionados(prev => 
+      prev.includes(bairro) ? prev.filter(b => b !== bairro) : [...prev, bairro]
+    );
+  };
+
   const handleCriar = async () => {
+    if (!nome || !descricao || bairrosSelecionados.length === 0) {
+      Alert.alert("Atenção", "Preencha o nome, descrição e selecione ao menos um bairro.");
+      return;
+    }
+
+    const host = Platform.OS === "android" ? "10.0.2.2" : "localhost";
     const body = {
       titulo: nome,
       descricao,
       categorias: categoria,
-      bairro,
+      bairros: bairrosSelecionados,
       privado,
       numeroParticipantes: Number(participantes),
+      tempoEntreMensagens: Number(tempoMensagens),
       video,
       audio,
       imagem,
       documento,
     };
 
-    console.log(body);
+    try {
+      const response = await fetch(`http://${host}:8080/grupo-tematico/criar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-    await fetch("http://SEU_IP:8080/grupo-tematico/criar", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+      if (response.ok) {
+        Alert.alert("Sucesso", "Grupo criado com sucesso!");
+        router.back();
+      } else {
+        Alert.alert("Erro", "Não foi possível criar o grupo.");
+      }
+    } catch (error) {
+      Alert.alert("Erro", "Falha na conexão com o servidor.");
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <TextInput
-          placeholder="Nome do grupo"
+    <View style={styles.mainContainer}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+        
+        {/* Nome do Grupo */}
+        <TextInput 
+          placeholder="Nome do grupo" 
           placeholderTextColor={Colors.cinzaClaro}
-          value={nome}
-          onChangeText={setNome}
-          style={styles.input}
+          value={nome} 
+          onChangeText={setNome} 
+          style={styles.input} 
         />
 
+        {/* Descrição */}
         <TextInput
           placeholder="Descrição do grupo"
           placeholderTextColor={Colors.cinzaClaro}
@@ -78,151 +115,259 @@ export default function CriarGrupoForm() {
           multiline
         />
 
-        <View style={styles.row}>
+        <View style={styles.selectorBox}>
           <AppText style={styles.label}>Grupo Privado</AppText>
-          <Switch value={privado} onValueChange={setPrivado} />
+          <Switch 
+            value={privado} 
+            onValueChange={setPrivado} 
+            trackColor={{ false: Colors.branco, true: Colors.roxo + "77" }}
+            thumbColor={privado ? Colors.roxo : Colors.branco}
+          />
         </View>
 
-        <View style={{ marginBottom: 15 }}>
-          <AppText style={styles.label}>Categorias</AppText>
+        {/*Bairros */}
+        <TouchableOpacity 
+          style={styles.selectorBox} 
+          onPress={() => setShowBairros(!showBairros)}
+          activeOpacity={0.7}
+        >
+          <AppText style={styles.label}>
+            {bairrosSelecionados.length > 0 
+              ? `${bairrosSelecionados.length} bairro(s) selecionado(s)` 
+              : "Selecione os bairros"}
+          </AppText>
+          <Ionicons 
+            name={showBairros ? "chevron-up-circle-outline" : "chevron-down-circle-outline"} 
+            size={24} 
+            color={Colors.roxo} 
+          />
+        </TouchableOpacity>
+        
+        {showBairros && (
+          <View style={styles.dropdown}>
+            <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
+              {LISTA_BAIRROS.map(b => (
+                <TouchableOpacity key={b} style={styles.dropOption} onPress={() => toggleBairro(b)}>
+                  <Ionicons 
+                    name={bairrosSelecionados.includes(b) ? "checkbox" : "square-outline"} 
+                    size={20} 
+                    color={Colors.roxo} 
+                  />
+                  <AppText style={styles.dropText}>{b.replace(/_/g, ' ')}</AppText>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
-          <View style={styles.optionsContainer}>
-            {CATEGORIAS.map((item) => (
-              <TouchableOpacity
-                key={item}
-                style={[
-                  styles.option,
-                  categoria === item && styles.optionSelected,
-                ]}
-                onPress={() => setCategoria(item)}
-              >
-                <AppText style={styles.optionText}>{item}</AppText>
-              </TouchableOpacity>
-            ))}
+        {/* Categoria */}
+        <AppText style={styles.sectionTitle}>Selecione a categoria</AppText>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
+          {CATEGORIAS.map((cat) => (
+            <TouchableOpacity 
+              key={cat} 
+              onPress={() => setCategoria(cat)}
+              style={[styles.catPill, categoria === cat && styles.catPillActive]}
+            >
+              <AppText style={[styles.catText, categoria === cat && { color: Colors.branco }]}>
+                {cat}
+              </AppText>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        <AppText style={styles.sectionTitle}>Mídias permitidas</AppText>
+        <View style={styles.mediaGrid}>
+          <View style={styles.mediaItem}>
+            <AppText style={styles.mediaLabel}>Vídeo</AppText>
+            <Switch value={video} onValueChange={setVideo} />
+          </View>
+          <View style={styles.mediaItem}>
+            <AppText style={styles.mediaLabel}>Áudio</AppText>
+            <Switch value={audio} onValueChange={setAudio} />
+          </View>
+          <View style={styles.mediaItem}>
+            <AppText style={styles.mediaLabel}>Imagem</AppText>
+            <Switch value={imagem} onValueChange={setImagem} />
+          </View>
+          <View style={styles.mediaItem}>
+            <AppText style={styles.mediaLabel}>Documento</AppText>
+            <Switch value={documento} onValueChange={setDocumento} />
           </View>
         </View>
 
-        <TextInput
-          placeholder="Bairro"
-          placeholderTextColor={Colors.cinzaClaro}
-          value={bairro}
-          onChangeText={setBairro}
-          style={styles.input}
-        />
-
-        <TextInput
-          value={participantes}
-          placeholder="Total de participantes permitidos (Max 100)"
-          onChangeText={setParticipantes}
-          keyboardType="numeric"
-          style={styles.input}
-        />
-
-
-        <AppText style={styles.label}>Mídias permitidas</AppText>
-
-        <View style={styles.row}>
-          <AppText>Vídeo</AppText>
-          <Switch value={video} onValueChange={setVideo} />
+        <View style={styles.inputGroupRow}>
+          <View style={styles.inputHalf}>
+            <AppText style={styles.labelSmall}>Máximo participantes:</AppText>
+            <TextInput 
+              value={participantes} 
+              onChangeText={setParticipantes} 
+              keyboardType="numeric" 
+              style={styles.inputSmall} 
+            />
+          </View>
+          <View style={styles.inputHalf}>
+            <AppText style={styles.labelSmall}>Tempo msgs (min):</AppText>
+            <TextInput 
+              value={tempoMensagens} 
+              onChangeText={setTempoMensagens} 
+              keyboardType="numeric" 
+              style={styles.inputSmall} 
+            />
+          </View>
         </View>
 
-        <View style={styles.row}>
-          <AppText>Áudio</AppText>
-          <Switch value={audio} onValueChange={setAudio} />
-        </View>
-
-        <View style={styles.row}>
-          <AppText>Imagem</AppText>
-          <Switch value={imagem} onValueChange={setImagem} />
-        </View>
-
-        <View style={styles.row}>
-          <AppText>Documento</AppText>
-          <Switch value={documento} onValueChange={setDocumento} />
-        </View>
       </ScrollView>
 
-      <TouchableOpacity style={styles.button} onPress={handleCriar}>
-        <AppText style={styles.buttonText}>Criar</AppText>
+      {/* Botão de Ação */}
+      <TouchableOpacity style={styles.btnCriar} onPress={handleCriar}>
+        <AppText style={styles.btnText}>Criar</AppText>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
-    backgroundColor: Colors.azulClaro,
     paddingHorizontal: 20,
-    paddingTop: 20,
-    justifyContent: "space-between",
   },
-
   input: {
-    borderWidth: 1,
-    borderColor: Colors.cinzaClaro,
-    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: Colors.grafite,
+    borderRadius: 15,
     padding: 12,
     marginBottom: 15,
     backgroundColor: Colors.branco,
     fontFamily: Fonts.regular,
     color: Colors.grafite,
   },
-
   textArea: {
-    height: 100,
-    textAlignVertical: "top",
+    height: 90,
+    textAlignVertical: 'top',
   },
-
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-
-  label: {
-    fontSize: GlobalFontSize.subtitle,
-    fontFamily: Fonts.semiBold,
-    color: Colors.grafite,
-  },
-
-  optionsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginTop: 10,
-  },
-
-  option: {
-    borderWidth: 1,
+  selectorBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1.5,
     borderColor: Colors.cinzaClaro,
-    borderRadius: 12,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    borderRadius: 25,
+    padding: 12,
+    marginBottom: 15,
     backgroundColor: Colors.branco,
   },
-
-  optionSelected: {
-    backgroundColor: Colors.roxo + "33",
+  label: {
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+    color: Colors.grafite,
+  },
+  sectionTitle: {
+    fontFamily: Fonts.semiBold,
+    fontSize: 14,
+    marginBottom: 10,
+    marginTop: 5,
+    color: Colors.grafite,
+  },
+  dropdown: {
+    backgroundColor: Colors.branco,
+    borderWidth: 1.5,
+    borderColor: Colors.cinzaClaro,
+    borderRadius: 15,
+    padding: 10,
+    marginBottom: 15,
+  },
+  dropOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.branco,
+  },
+  dropText: {
+    marginLeft: 10,
+    fontSize: 13,
+    fontFamily: Fonts.regular,
+    textTransform: 'capitalize',
+  },
+  catScroll: {
+    marginBottom: 20,
+  },
+  catPill: {
+    backgroundColor: Colors.branco,
+    borderWidth: 1,
+    borderColor: Colors.cinzaClaro,
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 6,
+    marginRight: 8,
+    height: 35,
+    justifyContent: 'center',
+  },
+  catPillActive: {
+    backgroundColor: Colors.roxo,
     borderColor: Colors.roxo,
   },
-
-  optionText: {
+  catText: {
+    fontSize: 12,
+    fontFamily: Fonts.semiBold,
+  },
+  mediaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  mediaItem: {
+    width: '48%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: Colors.branco,
+    padding: 10,
+    borderRadius: 15,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: Colors.branco,
+  },
+  mediaLabel: {
+    fontSize: 13,
     fontFamily: Fonts.regular,
   },
-
-  button: {
+  inputGroupRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  inputHalf: {
+    width: '48%',
+  },
+  labelSmall: {
+    fontFamily: Fonts.regular,
+    fontSize: 11,
+    marginBottom: 5,
+    color: Colors.grafite,
+  },
+  inputSmall: {
+    borderWidth: 1.5,
+    borderColor: Colors.cinzaClaro,
+    borderRadius: 15,
+    padding: 8,
+    textAlign: 'center',
+    backgroundColor: Colors.branco,
+    fontFamily: Fonts.regular,
+  },
+  btnCriar: {
     backgroundColor: Colors.roxo,
     paddingVertical: 15,
-    borderRadius: 24,
-    alignItems: "center",
-    marginVertical: 20,
+    borderRadius: 15,
+    alignItems: 'center',
+    marginBottom: 20,
+    marginTop: 10,
   },
-
-  buttonText: {
+  btnText: {
     color: Colors.branco,
-    fontSize: GlobalFontSize.title,
+    fontSize: 20,
     fontFamily: Fonts.semiBold,
   },
 });

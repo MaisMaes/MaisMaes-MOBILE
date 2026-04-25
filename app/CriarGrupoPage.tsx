@@ -33,6 +33,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: "flex-end",
     backgroundColor: Colors.roxo,
+    paddingRight: 30,
+    fontSize: GlobalFontSize.title,
   },
 
   title: {
