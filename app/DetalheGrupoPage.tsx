@@ -18,6 +18,7 @@ import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
 import GrupoTematicoService from "@/service/GrupoTematicoService";
 import { DetalheGrupoResponseDTO } from "@/service/model/DetalheGrupoResponseDTO";
 import PopupService from "@/utils/PopupService";
+import ChatBubbleIcon from "@/components/ChatBubbleIcon";
 
 const CATEGORIAS = [
   "SAUDE",
@@ -209,7 +210,7 @@ export default function DetalheGrupoPage() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
+      <View style={styles.ContainerContent}>
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -465,6 +466,8 @@ export default function DetalheGrupoPage() {
           </>
         )}
       </ScrollView>
+      </View>
+      <ChatBubbleIcon />
     </SafeAreaView>
   );
 }
@@ -472,14 +475,17 @@ export default function DetalheGrupoPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.branco,
+    backgroundColor: Colors.roxo,
   },
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  // Header
+  ContainerContent:{
+    flex: 1,
+    backgroundColor: Colors.branco,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -501,7 +507,6 @@ const styles = StyleSheet.create({
   headerBtn: {
     padding: 4,
   },
-  // Conteúdo
   content: {
     padding: 20,
     paddingBottom: 40,
