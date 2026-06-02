@@ -13,6 +13,7 @@ interface CardGrupoProps {
   bairros?: string[];
   isFavorito?: boolean;
   onPress?: () => void;
+  onParticipar?: () => void;
 }
 
 export default function CardGrupo({
@@ -22,6 +23,7 @@ export default function CardGrupo({
   bairros,
   isFavorito = false,
   onPress,
+  onParticipar,
 }: CardGrupoProps) {
   const router = useRouter();
 
@@ -40,6 +42,7 @@ export default function CardGrupo({
     try {
       await GrupoTematicoService.participar(id);
       PopupService.success("Você entrou no grupo com sucesso!");
+      onParticipar?.();
     } catch (error: any) {
       const message =
         error?.response?.data?.error ??

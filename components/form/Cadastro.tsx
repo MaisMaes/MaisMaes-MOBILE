@@ -7,6 +7,7 @@ import { useState } from "react";
 import { View } from "react-native";
 import AppButton from "../AppButton";
 import Input from "../input";
+import { useRouter } from "expo-router";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SENHA_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
@@ -28,6 +29,7 @@ export default function Cadastro() {
   });
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const router = useRouter();
 
   const validate = (): Record<string, string> => {
     const e: Record<string, string> = {};
@@ -66,6 +68,7 @@ export default function Cadastro() {
       const response = await UsuarioService.cadastrar(cadastrarData);
       await TokenService.saveToken(response.token);
       PopupService.success("Cadastro realizado com sucesso!");
+      setTimeout(() => router.replace("/StartPage"), 2000);
     } catch (error: any) {
       const message =
         error?.response?.data?.error ?? "Falha no cadastro. Tente novamente.";

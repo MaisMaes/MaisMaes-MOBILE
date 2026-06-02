@@ -10,10 +10,11 @@ type Item = {
 };
 
 const items: Item[] = [
-  { label: "Chat", icon: "chatbubble-outline", href: "/#" },
-  { label: "Explore", icon: "compass-outline", href: "/GrupoPage" },
+  { label: "Chat", icon: "compass-outline", href: "/#" },
+  { label: "Grupos", icon: "chatbubble-outline", href: "/GrupoPage" },
   { label: "Message", icon: "notifications-outline", href: "/#" },
-  { label: "Me", icon: "person-outline", href: "/profile" },
+  { label: "Perfil", icon: "person-outline", href: "/profile" },
+  
 ];
 
 export default function BottomBar() {

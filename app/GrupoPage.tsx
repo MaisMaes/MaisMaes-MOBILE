@@ -13,11 +13,11 @@ import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppText from "@/components/AppText";
+import BottomBar from "@/components/BottomBar";
 import CardGrupo from "@/components/CardGrupo";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
 import GrupoTematicoService from "@/service/GrupoTematicoService";
 import { ListarGrupoTematicoDTO } from "@/service/model/ListarGrupoTematicoDTO";
-import BottomBar from "@/components/BottomBar";
 
 const CATEGORIAS = [
   "SAUDE",
@@ -160,18 +160,22 @@ export default function GrupoPage() {
           </AppText>
           {carregando ? (
             <ActivityIndicator size="small" color={Colors.roxo} />
-          ) : grupos.length === 0 ? (
+          ) : grupos.filter((g) => !meusGrupos.some((m) => m.id === g.id))
+              .length === 0 ? (
             <AppText style={styles.emptyText}>Nenhum grupo encontrado.</AppText>
           ) : (
-            grupos.map((item) => (
-              <CardGrupo
-                key={item.id}
-                id={item.id}
-                titulo={item.titulo}
-                descricao={item.descricao}
-                bairros={item.bairros}
-              />
-            ))
+            grupos
+              .filter((g) => !meusGrupos.some((m) => m.id === g.id))
+              .map((item) => (
+                <CardGrupo
+                  key={item.id}
+                  id={item.id}
+                  titulo={item.titulo}
+                  descricao={item.descricao}
+                  bairros={item.bairros}
+                  onParticipar={carregarMeusGrupos}
+                />
+              ))
           )}
         </ScrollView>
       )}
@@ -183,7 +187,7 @@ export default function GrupoPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.branco
+    backgroundColor: Colors.roxo,
   },
   header: {
     height: "10%",
@@ -203,6 +207,7 @@ const styles = StyleSheet.create({
   searchSection: {
     paddingHorizontal: 20,
     paddingTop: 15,
+    backgroundColor: Colors.branco,
   },
   searchRow: {
     flexDirection: "row",
@@ -258,6 +263,8 @@ const styles = StyleSheet.create({
   // FIM ESTILOS BUSCA
   list: {
     padding: 20,
+    paddingBottom: 100,
+    backgroundColor: Colors.branco,
   },
   sectionTitle: {
     fontFamily: Fonts.bold,

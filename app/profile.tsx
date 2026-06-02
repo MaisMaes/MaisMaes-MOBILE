@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState, useEffect } from "react";
 import BottomBar from "@/components/BottomBar";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
+import PopupService from "@/utils/PopupService";
 
 type Usuario = {
   nome: string;
@@ -26,7 +27,7 @@ export default function Profile() {
     try {
       const token = await TokenService.getToken();
 
-      const response = await axios.get("http://localhost:8080/usuario/me", {
+      const response = await axios.get("http://192.168.137.194:8080/usuario/me", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -49,7 +50,7 @@ export default function Profile() {
       const token = await TokenService.getToken();
 
       await axios.patch(
-        "http://localhost:8080/usuario/atualizar",
+        "http://192.168.137.194:8080/usuario/atualizar",
         {
           nome,
           email,
@@ -63,12 +64,12 @@ export default function Profile() {
         }
       );
 
-      alert("Atualizado com sucesso!");
+      PopupService.success("Perfil atualizado com sucesso!");
       setEditando(false);
 
     } catch (error) {
       console.log(error);
-      alert("Erro ao atualizar");
+      PopupService.error("Erro ao atualizar perfil. Tente novamente.");
     }
   }
 
@@ -98,7 +99,7 @@ export default function Profile() {
         <Text style={styles.title}>Perfil</Text>
       </View>
       <View style={styles.container}>
-        {/* Avatar */}
+       
         <View style={styles.avatar} />
         <TextInput
           style={styles.input}
@@ -116,7 +117,7 @@ export default function Profile() {
 
         <TextInput
           style={styles.input}
-          placeholder="Senha"
+          placeholder="********"
           secureTextEntry
           editable={editando}
           onChangeText={setSenha}
