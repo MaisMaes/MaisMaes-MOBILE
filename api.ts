@@ -1,7 +1,7 @@
 import axios from "axios";
 import TokenService from "./service/TokenService";
 
-const BASE_URL = "http://192.168.1.112:8080/";
+const BASE_URL = "http://192.168.1.109:8080/";
 
 const api = axios.create({
   baseURL: BASE_URL,

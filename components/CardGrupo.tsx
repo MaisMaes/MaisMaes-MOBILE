@@ -1,4 +1,5 @@
 import AppText from "@/components/AppText";
+import ChatBubbleIcon from "@/components/ChatBubbleIcon";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
 import GrupoTematicoService from "@/service/GrupoTematicoService";
 import PopupService from "@/utils/PopupService";
@@ -58,7 +59,7 @@ export default function CardGrupo({
       activeOpacity={0.8}
     >
       <View style={styles.iconContainer}>
-        <Ionicons name="chatbubble-outline" size={28} color={Colors.grafite} />
+        <ChatBubbleIcon groupId={id} compact />
       </View>
 
       <View style={styles.infoContainer}>
