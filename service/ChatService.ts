@@ -1,7 +1,10 @@
 import SockJS from "sockjs-client";
 import * as StompLib from "stompjs/lib/stomp";
 
+import api from "../api";
+
 import { ChatMessage } from "./model/ChatMessage";
+import { HistoricoMensagensResponse } from "./model/HistoricoMensagensResponse";
 
 type MessageHandler = (message: ChatMessage) => void;
 
@@ -9,6 +12,47 @@ class ChatService {
   private readonly CHAT_URL = "http://192.168.1.109:8080/chat";
   private client: any = null;
   private subscription: any = null;
+
+  async buscarHistorico(
+    groupId: number,
+    antes?: string,
+    quantidade = 30,
+  ): Promise<HistoricoMensagensResponse> {
+    const response = await api.get<HistoricoMensagensResponse>(
+      `chat/grupos/${groupId}/mensagens`,
+      {
+        params: {
+          quantidade,
+          ...(antes ? { antes } : {}),
+        },
+      },
+    );
+
+    return response.data;
+  }
+
+  async uploadArquivo(
+    uri: string,
+    nome: string,
+    mimeType: string,
+  ): Promise<string> {
+    const formData = new FormData();
+    formData.append("file", {
+      uri,
+      name: nome,
+      type: mimeType,
+    } as any);
+
+    const response = await api.post<string>("arquivo/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    return response.data;
+  }
+
+  urlArquivo(fileId: string): string {
+    return `http://192.168.1.109:8080/arquivo/${fileId}`;
+  }
 
   conectar(
     groupId: number,
