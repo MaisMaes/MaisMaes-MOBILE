@@ -78,6 +78,7 @@ export default function GrupoPage() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={{ flex: 1, backgroundColor: Colors.branco }}>
       <View style={styles.header}>
         <AppText style={styles.headerTitle}>Grupos</AppText>
       </View>
@@ -180,6 +181,7 @@ export default function GrupoPage() {
         </ScrollView>
       )}
       <BottomBar />
+      </View>
     </SafeAreaView>
   );
 }

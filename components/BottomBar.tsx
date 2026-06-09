@@ -10,9 +10,9 @@ type Item = {
 };
 
 const items: Item[] = [
-  { label: "Chat", icon: "compass-outline", href: "/ChatsPage" },
+  { label: "Início", icon: "home-outline", href: "/ChatsPage" },
   { label: "Grupos", icon: "chatbubble-outline", href: "/GrupoPage" },
-  { label: "Message", icon: "notifications-outline", href: "/#" },
+  { label: "Notícias", icon: "newspaper-outline", href: "/#" },
   { label: "Perfil", icon: "person-outline", href: "/profile" },
   
 ];
@@ -29,7 +29,7 @@ export default function BottomBar() {
         justifyContent: "space-around",
         padding: 10,
         position: "absolute",
-        bottom: 60,
+        bottom: 55,
         width: "90%",
         backgroundColor: Colors.branco,
         borderRadius: 50,
