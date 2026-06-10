@@ -44,7 +44,6 @@ export default function Login() {
       PopupService.success("Login realizado com sucesso!");
       setTimeout(() => navigate.replace("/HomePage"), 2000);
     } catch (error) {
-      console.error("Erro no login:", error);
       PopupService.error("Falha no login. Verifique suas credenciais.");
     }
   };
