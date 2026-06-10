@@ -35,8 +35,8 @@ class InfoCardService {
   }
 
   async listarDestaques(): Promise<InfoCard[]> {
-    const response = await api.get<InfoCard[]>("/infocards/destaques");
-    return response.data;
+    const response = await api.get<PageResponse<InfoCard>>("/infocards/destaques");
+    return response.data.content ?? [];
   }
 
 //   async buscarPorId(id: string): Promise<InfoCard> {
