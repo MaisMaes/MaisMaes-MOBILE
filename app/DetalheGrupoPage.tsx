@@ -2,23 +2,23 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppText from "@/components/AppText";
+import ChatBubbleIcon from "@/components/ChatBubbleIcon";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
 import GrupoTematicoService from "@/service/GrupoTematicoService";
 import { DetalheGrupoResponseDTO } from "@/service/model/DetalheGrupoResponseDTO";
 import PopupService from "@/utils/PopupService";
-import ChatBubbleIcon from "@/components/ChatBubbleIcon";
 
 const CATEGORIAS = [
   "SAUDE",
@@ -84,12 +84,16 @@ export default function DetalheGrupoPage() {
   const [imagem, setImagem] = useState(false);
   const [documento, setDocumento] = useState(false);
   const [showBairros, setShowBairros] = useState(false);
+  const [verificandoChat, setVerificandoChat] = useState(false);
+  const [eParticipante, setEParticipante] = useState<boolean | null>(null);
 
   const carregarDetalhes = async () => {
     try {
       setCarregando(true);
       const data = await GrupoTematicoService.buscarDetalhes(Number(id));
       setGrupo(data);
+      // usa o campo já disponível no DTO para evitar chamada extra
+      setEParticipante(data.usuarioLogadoEParticipante);
     } catch {
       PopupService.error("Erro ao carregar detalhes do grupo.");
       router.back();
@@ -183,6 +187,41 @@ export default function DetalheGrupoPage() {
     );
   };
 
+  const handleAbrirChat = async () => {
+    if (eParticipante === false) {
+      PopupService.info(
+        "Você precisa participar do grupo para acessar o chat.",
+      );
+      return;
+    }
+
+    if (eParticipante === null) {
+      setVerificandoChat(true);
+      try {
+        const status = await GrupoTematicoService.verificarParticipacao(
+          Number(id),
+        );
+        setEParticipante(status.participante);
+        if (!status.participante) {
+          PopupService.info(
+            "Você precisa participar do grupo para acessar o chat.",
+          );
+          return;
+        }
+      } catch {
+        PopupService.error("Erro ao verificar participação.");
+        return;
+      } finally {
+        setVerificandoChat(false);
+      }
+    }
+
+    router.push({
+      pathname: "/ChatPage" as never,
+      params: { groupId: id },
+    });
+  };
+
   const toggleBairro = (bairro: string) => {
     setBairros((prev) =>
       prev.includes(bairro)
@@ -211,263 +250,289 @@ export default function DetalheGrupoPage() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.ContainerContent}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.headerBtn}
-        >
-          <Ionicons name="arrow-back" size={24} color={Colors.branco} />
-        </TouchableOpacity>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.headerBtn}
+          >
+            <Ionicons name="arrow-back" size={24} color={Colors.branco} />
+          </TouchableOpacity>
 
-        <AppText style={styles.headerTitle} numberOfLines={1}>
-          {grupo.titulo}
-        </AppText>
+          <AppText style={styles.headerTitle} numberOfLines={1}>
+            {grupo.titulo}
+          </AppText>
 
-        <View style={styles.headerActions}>
-          {podeEditar && !editando && (
-            <TouchableOpacity onPress={iniciarEdicao} style={styles.headerBtn}>
-              <Ionicons name="pencil" size={22} color={Colors.branco} />
-            </TouchableOpacity>
-          )}
-          {podeDeletar && !editando && (
-            <TouchableOpacity onPress={handleExcluir} style={styles.headerBtn}>
-              <Ionicons name="trash-outline" size={22} color={Colors.branco} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {!editando ? (
-          <>
-            <AppText style={styles.titulo}>{grupo.titulo}</AppText>
-            <AppText style={styles.descricao}>{grupo.descricao}</AppText>
-
-            <View style={styles.pillsRow}>
-              <View style={styles.pill}>
-                <AppText style={styles.pillText}>{grupo.categoria}</AppText>
-              </View>
-              {grupo.privado && (
-                <View style={[styles.pill, { backgroundColor: Colors.roxo }]}>
-                  <AppText style={[styles.pillText, { color: Colors.branco }]}>
-                    Privado
-                  </AppText>
-                </View>
-              )}
-            </View>
-
-            <AppText style={styles.sectionTitle}>Bairros</AppText>
-            <View style={styles.tagsContainer}>
-              {grupo.bairros.map((b) => (
-                <View key={b} style={styles.tag}>
-                  <AppText style={styles.tagText}>
-                    {b.replace(/_/g, " ")}
-                  </AppText>
-                </View>
-              ))}
-            </View>
-
-            <AppText style={styles.sectionTitle}>
-              Participantes ({grupo.participantes.length}/
-              {grupo.numeroParticipantes})
-            </AppText>
-            {grupo.participantes.length === 0 ? (
-              <AppText style={styles.emptyText}>
-                Nenhum participante ainda.
-              </AppText>
-            ) : (
-              grupo.participantes.map((p) => (
-                <View key={p.id} style={styles.participanteItem}>
-                  <Ionicons
-                    name="person-circle-outline"
-                    size={28}
-                    color={Colors.roxo}
-                  />
-                  <AppText style={styles.participanteNome}>{p.nome}</AppText>
-                </View>
-              ))
+          <View style={styles.headerActions}>
+            {podeEditar && !editando && (
+              <TouchableOpacity
+                onPress={iniciarEdicao}
+                style={styles.headerBtn}
+              >
+                <Ionicons name="pencil" size={22} color={Colors.branco} />
+              </TouchableOpacity>
             )}
-          </>
-        ) : (
-          // ── MODO EDIÇÃO ────────────────────────────────────────────
-          <>
-            <AppText style={styles.sectionTitle}>Título</AppText>
-            <TextInput
-              value={titulo}
-              onChangeText={setTitulo}
-              style={styles.input}
-              placeholderTextColor={Colors.cinzaClaro}
-            />
+            {podeDeletar && !editando && (
+              <TouchableOpacity
+                onPress={handleExcluir}
+                style={styles.headerBtn}
+              >
+                <Ionicons
+                  name="trash-outline"
+                  size={22}
+                  color={Colors.branco}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
 
-            <AppText style={styles.sectionTitle}>Descrição</AppText>
-            <TextInput
-              value={descricao}
-              onChangeText={setDescricao}
-              style={[styles.input, styles.textArea]}
-              multiline
-              placeholderTextColor={Colors.cinzaClaro}
-            />
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {!editando ? (
+            <>
+              <AppText style={styles.titulo}>{grupo.titulo}</AppText>
+              <AppText style={styles.descricao}>{grupo.descricao}</AppText>
 
-            <View style={styles.selectorBox}>
-              <AppText style={styles.label}>Grupo Privado</AppText>
-              <Switch
-                value={privado}
-                onValueChange={setPrivado}
-                trackColor={{
-                  false: Colors.cinzaClaro,
-                  true: Colors.roxo + "77",
-                }}
-                thumbColor={privado ? Colors.roxo : Colors.branco}
-              />
-            </View>
+              <View style={styles.pillsRow}>
+                <View style={styles.pill}>
+                  <AppText style={styles.pillText}>{grupo.categoria}</AppText>
+                </View>
+                {grupo.privado && (
+                  <View style={[styles.pill, { backgroundColor: Colors.roxo }]}>
+                    <AppText
+                      style={[styles.pillText, { color: Colors.branco }]}
+                    >
+                      Privado
+                    </AppText>
+                  </View>
+                )}
+              </View>
 
-            {/* Bairros */}
-            <TouchableOpacity
-              style={styles.selectorBox}
-              onPress={() => setShowBairros(!showBairros)}
-              activeOpacity={0.7}
-            >
-              <AppText style={styles.label}>
-                {bairros.length > 0
-                  ? `${bairros.length} bairro(s) selecionado(s)`
-                  : "Selecione os bairros"}
+              <AppText style={styles.sectionTitle}>Bairros</AppText>
+              <View style={styles.tagsContainer}>
+                {grupo.bairros.map((b, i) => (
+                  <View key={`bairro-view-${b}-${i}`} style={styles.tag}>
+                    <AppText style={styles.tagText}>
+                      {b.replace(/_/g, " ")}
+                    </AppText>
+                  </View>
+                ))}
+              </View>
+
+              <AppText style={styles.sectionTitle}>
+                Participantes ({grupo.participantes.length}/
+                {grupo.numeroParticipantes})
               </AppText>
-              <Ionicons
-                name={
-                  showBairros
-                    ? "chevron-up-circle-outline"
-                    : "chevron-down-circle-outline"
-                }
-                size={24}
-                color={Colors.roxo}
-              />
-            </TouchableOpacity>
-
-            {showBairros && (
-              <View style={styles.dropdown}>
-                <ScrollView nestedScrollEnabled style={{ maxHeight: 200 }}>
-                  {LISTA_BAIRROS.map((b) => (
-                    <TouchableOpacity
-                      key={b}
-                      style={styles.dropOption}
-                      onPress={() => toggleBairro(b)}
+              {grupo.participantes.length === 0 ? (
+                <AppText style={styles.emptyText}>
+                  Nenhum participante ainda.
+                </AppText>
+              ) : (
+                <View>
+                  {grupo.participantes.map((p, i) => (
+                    <View
+                      key={p.id ?? `part-${i}`}
+                      style={styles.participanteItem}
                     >
                       <Ionicons
-                        name={
-                          bairros.includes(b) ? "checkbox" : "square-outline"
-                        }
-                        size={20}
+                        name="person-circle-outline"
+                        size={28}
                         color={Colors.roxo}
                       />
-                      <AppText style={styles.dropText}>
-                        {b.replace(/_/g, " ")}
+                      <AppText style={styles.participanteNome}>
+                        {p.nome}
                       </AppText>
-                    </TouchableOpacity>
+                    </View>
                   ))}
-                </ScrollView>
-              </View>
-            )}
+                </View>
+              )}
+            </>
+          ) : (
+            // ── MODO EDIÇÃO ────────────────────────────────────────────
+            <>
+              <AppText style={styles.sectionTitle}>Título</AppText>
+              <TextInput
+                value={titulo}
+                onChangeText={setTitulo}
+                style={styles.input}
+                placeholderTextColor={Colors.cinzaClaro}
+              />
 
-            {/* Categoria */}
-            <AppText style={styles.sectionTitle}>Categoria</AppText>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.catScroll}
-            >
-              {CATEGORIAS.map((cat) => (
-                <TouchableOpacity
-                  key={cat}
-                  onPress={() => setCategoria(cat)}
-                  style={[
-                    styles.catPill,
-                    categoria === cat && styles.catPillActive,
-                  ]}
-                >
-                  <AppText
+              <AppText style={styles.sectionTitle}>Descrição</AppText>
+              <TextInput
+                value={descricao}
+                onChangeText={setDescricao}
+                style={[styles.input, styles.textArea]}
+                multiline
+                placeholderTextColor={Colors.cinzaClaro}
+              />
+
+              <View style={styles.selectorBox}>
+                <AppText style={styles.label}>Grupo Privado</AppText>
+                <Switch
+                  value={privado}
+                  onValueChange={setPrivado}
+                  trackColor={{
+                    false: Colors.cinzaClaro,
+                    true: Colors.roxo + "77",
+                  }}
+                  thumbColor={privado ? Colors.roxo : Colors.branco}
+                />
+              </View>
+
+              {/* Bairros */}
+              <TouchableOpacity
+                style={styles.selectorBox}
+                onPress={() => setShowBairros(!showBairros)}
+                activeOpacity={0.7}
+              >
+                <AppText style={styles.label}>
+                  {bairros.length > 0
+                    ? `${bairros.length} bairro(s) selecionado(s)`
+                    : "Selecione os bairros"}
+                </AppText>
+                <Ionicons
+                  name={
+                    showBairros
+                      ? "chevron-up-circle-outline"
+                      : "chevron-down-circle-outline"
+                  }
+                  size={24}
+                  color={Colors.roxo}
+                />
+              </TouchableOpacity>
+
+              {showBairros && (
+                <View style={styles.dropdown}>
+                  <ScrollView nestedScrollEnabled style={{ maxHeight: 200 }}>
+                    {LISTA_BAIRROS.map((b, i) => (
+                      <TouchableOpacity
+                        key={`lista-${b}-${i}`}
+                        style={styles.dropOption}
+                        onPress={() => toggleBairro(b)}
+                      >
+                        <Ionicons
+                          name={
+                            bairros.includes(b) ? "checkbox" : "square-outline"
+                          }
+                          size={20}
+                          color={Colors.roxo}
+                        />
+                        <AppText style={styles.dropText}>
+                          {b.replace(/_/g, " ")}
+                        </AppText>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+
+              {/* Categoria */}
+              <AppText style={styles.sectionTitle}>Categoria</AppText>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.catScroll}
+              >
+                {CATEGORIAS.map((cat) => (
+                  <TouchableOpacity
+                    key={cat}
+                    onPress={() => setCategoria(cat)}
                     style={[
-                      styles.catText,
-                      categoria === cat && { color: Colors.branco },
+                      styles.catPill,
+                      categoria === cat && styles.catPillActive,
                     ]}
                   >
-                    {cat}
+                    <AppText
+                      style={[
+                        styles.catText,
+                        categoria === cat && { color: Colors.branco },
+                      ]}
+                    >
+                      {cat}
+                    </AppText>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* Mídias */}
+              <AppText style={styles.sectionTitle}>Mídias permitidas</AppText>
+              <View style={styles.mediaGrid}>
+                {(
+                  [
+                    { label: "Vídeo", value: video, setter: setVideo },
+                    { label: "Áudio", value: audio, setter: setAudio },
+                    { label: "Imagem", value: imagem, setter: setImagem },
+                    {
+                      label: "Documento",
+                      value: documento,
+                      setter: setDocumento,
+                    },
+                  ] as const
+                ).map(({ label, value, setter }) => (
+                  <View key={label} style={styles.mediaItem}>
+                    <AppText style={styles.mediaLabel}>{label}</AppText>
+                    <Switch value={value} onValueChange={setter} />
+                  </View>
+                ))}
+              </View>
+
+              {/* Limites numéricos */}
+              <View style={styles.inputGroupRow}>
+                <View style={styles.inputHalf}>
+                  <AppText style={styles.labelSmall}>
+                    Máx. participantes:
                   </AppText>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            {/* Mídias */}
-            <AppText style={styles.sectionTitle}>Mídias permitidas</AppText>
-            <View style={styles.mediaGrid}>
-              {(
-                [
-                  { label: "Vídeo", value: video, setter: setVideo },
-                  { label: "Áudio", value: audio, setter: setAudio },
-                  { label: "Imagem", value: imagem, setter: setImagem },
-                  {
-                    label: "Documento",
-                    value: documento,
-                    setter: setDocumento,
-                  },
-                ] as const
-              ).map(({ label, value, setter }) => (
-                <View key={label} style={styles.mediaItem}>
-                  <AppText style={styles.mediaLabel}>{label}</AppText>
-                  <Switch value={value} onValueChange={setter} />
+                  <TextInput
+                    value={numeroParticipantes}
+                    onChangeText={setNumeroParticipantes}
+                    keyboardType="numeric"
+                    style={styles.inputSmall}
+                  />
                 </View>
-              ))}
-            </View>
-
-            {/* Limites numéricos */}
-            <View style={styles.inputGroupRow}>
-              <View style={styles.inputHalf}>
-                <AppText style={styles.labelSmall}>Máx. participantes:</AppText>
-                <TextInput
-                  value={numeroParticipantes}
-                  onChangeText={setNumeroParticipantes}
-                  keyboardType="numeric"
-                  style={styles.inputSmall}
-                />
+                <View style={styles.inputHalf}>
+                  <AppText style={styles.labelSmall}>Tempo msgs (min):</AppText>
+                  <TextInput
+                    value={tempoMensagens}
+                    onChangeText={setTempoMensagens}
+                    keyboardType="numeric"
+                    style={styles.inputSmall}
+                  />
+                </View>
               </View>
-              <View style={styles.inputHalf}>
-                <AppText style={styles.labelSmall}>Tempo msgs (min):</AppText>
-                <TextInput
-                  value={tempoMensagens}
-                  onChangeText={setTempoMensagens}
-                  keyboardType="numeric"
-                  style={styles.inputSmall}
-                />
-              </View>
-            </View>
 
-            {/* Botões Salvar / Cancelar */}
-            <View style={styles.editActions}>
-              <TouchableOpacity
-                style={styles.btnCancelar}
-                onPress={cancelarEdicao}
-              >
-                <AppText style={styles.btnCancelarText}>Cancelar</AppText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.btnSalvar, salvando && { opacity: 0.6 }]}
-                onPress={handleSalvar}
-                disabled={salvando}
-              >
-                {salvando ? (
-                  <ActivityIndicator size="small" color={Colors.branco} />
-                ) : (
-                  <AppText style={styles.btnSalvarText}>Salvar</AppText>
-                )}
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
-      </ScrollView>
+              {/* Botões Salvar / Cancelar */}
+              <View style={styles.editActions}>
+                <TouchableOpacity
+                  style={styles.btnCancelar}
+                  onPress={cancelarEdicao}
+                >
+                  <AppText style={styles.btnCancelarText}>Cancelar</AppText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.btnSalvar, salvando && { opacity: 0.6 }]}
+                  onPress={handleSalvar}
+                  disabled={salvando}
+                >
+                  {salvando ? (
+                    <ActivityIndicator size="small" color={Colors.branco} />
+                  ) : (
+                    <AppText style={styles.btnSalvarText}>Salvar</AppText>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </ScrollView>
       </View>
-      <ChatBubbleIcon />
+      <ChatBubbleIcon
+        groupId={Number(id)}
+        onPress={handleAbrirChat}
+        loading={verificandoChat}
+        disabled={eParticipante === false}
+      />
     </SafeAreaView>
   );
 }
@@ -482,7 +547,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  ContainerContent:{
+  ContainerContent: {
     flex: 1,
     backgroundColor: Colors.branco,
   },

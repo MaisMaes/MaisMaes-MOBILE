@@ -5,6 +5,7 @@ import GrupoTematicoService from "@/service/GrupoTematicoService";
 import PopupService from "@/utils/PopupService";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface CardGrupoProps {
@@ -27,6 +28,39 @@ export default function CardGrupo({
   onParticipar,
 }: CardGrupoProps) {
   const router = useRouter();
+  const [verificandoChat, setVerificandoChat] = useState(false);
+  const [eParticipante, setEParticipante] = useState<boolean | null>(null);
+
+  const handleAbrirChat = async () => {
+    if (eParticipante === false) {
+      PopupService.info(
+        "Você precisa participar do grupo para acessar o chat.",
+      );
+      return;
+    }
+
+    setVerificandoChat(true);
+    try {
+      const status = await GrupoTematicoService.verificarParticipacao(id);
+      setEParticipante(status.participante);
+      if (!status.participante) {
+        PopupService.info(
+          "Você precisa participar do grupo para acessar o chat.",
+        );
+        return;
+      }
+    } catch {
+      PopupService.error("Erro ao verificar participação.");
+      return;
+    } finally {
+      setVerificandoChat(false);
+    }
+
+    router.push({
+      pathname: "/ChatPage" as never,
+      params: { groupId: id.toString() },
+    });
+  };
 
   const handlePress = () => {
     if (onPress) {
@@ -59,7 +93,12 @@ export default function CardGrupo({
       activeOpacity={0.8}
     >
       <View style={styles.iconContainer}>
-        <ChatBubbleIcon groupId={id} compact />
+        <ChatBubbleIcon
+          compact
+          onPress={handleAbrirChat}
+          loading={verificandoChat}
+          disabled={eParticipante === false}
+        />
       </View>
 
       <View style={styles.infoContainer}>

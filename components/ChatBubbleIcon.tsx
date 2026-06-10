@@ -2,10 +2,11 @@ import { Colors } from "@/constants/GlobalStyles";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
-  StyleProp,
-  StyleSheet,
-  TouchableOpacity,
-  ViewStyle,
+    ActivityIndicator,
+    StyleProp,
+    StyleSheet,
+    TouchableOpacity,
+    ViewStyle,
 } from "react-native";
 
 interface ChatBubbleIconProps {
@@ -13,6 +14,8 @@ interface ChatBubbleIconProps {
   compact?: boolean;
   style?: StyleProp<ViewStyle>;
   onPress?: () => void;
+  loading?: boolean;
+  disabled?: boolean;
 }
 
 export default function ChatBubbleIcon({
@@ -20,16 +23,18 @@ export default function ChatBubbleIcon({
   compact = false,
   style,
   onPress,
+  loading = false,
+  disabled = false,
 }: ChatBubbleIconProps) {
   const router = useRouter();
 
   const handlePress = () => {
+    if (loading || disabled) return;
+
     if (onPress) {
       onPress();
       return;
     }
-
-    console.log("ChatBubbleIcon pressed. groupId:", groupId);
 
     if (groupId === undefined) return;
 
@@ -41,16 +46,25 @@ export default function ChatBubbleIcon({
 
   return (
     <TouchableOpacity
-      style={[styles.bubbleContainer, compact && styles.compact, style]}
+      style={[
+        styles.bubbleContainer,
+        compact && styles.compact,
+        disabled && styles.disabled,
+        style,
+      ]}
       onPress={handlePress}
       activeOpacity={0.8}
-      disabled={!onPress && groupId === undefined}
+      disabled={loading || disabled || (!onPress && groupId === undefined)}
     >
-      <Ionicons
-        name="chatbubble-outline"
-        size={compact ? 22 : 24}
-        color={Colors.roxo}
-      />
+      {loading ? (
+        <ActivityIndicator size="small" color={Colors.roxo} />
+      ) : (
+        <Ionicons
+          name="chatbubble-outline"
+          size={compact ? 22 : 24}
+          color={disabled ? Colors.cinzaClaro : Colors.roxo}
+        />
+      )}
     </TouchableOpacity>
   );
 }
@@ -84,5 +98,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 3,
     elevation: 2,
+  },
+  disabled: {
+    borderColor: Colors.cinzaClaro,
+    opacity: 0.5,
   },
 });
