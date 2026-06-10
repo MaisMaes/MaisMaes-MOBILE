@@ -1,3 +1,4 @@
+import AppHeader from "@/components/AppHeader";
 import TokenService from "@/service/TokenService";
 import {
   View,
@@ -100,9 +101,7 @@ export default function Profile() {
   return (
     <SafeAreaView style={styles.container}>
       
-      <View style={styles.header}>
-        <AppText style={styles.headerTitle}>Perfil</AppText>
-      </View>
+      <AppHeader titulo="Perfil" logo/>
 
       <View style={styles.content}>
         <View style={styles.avatar} />

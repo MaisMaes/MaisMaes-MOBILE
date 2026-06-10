@@ -1,3 +1,4 @@
+import AppHeader from "@/components/AppHeader";
 import AppText from "@/components/AppText";
 import BottomBar from "@/components/BottomBar";
 import CardNoticia from "@/components/CardNoticia";
@@ -14,6 +15,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { SafeAreaFrameContext, SafeAreaView } from "react-native-safe-area-context";
 
 export default function NoticiasPage() {
   const [noticias, setNoticias] = useState<InfoCard[]>([]);
@@ -50,10 +52,10 @@ export default function NoticiasPage() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <AppText style={styles.headerTitle}>Notícias</AppText>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+
+      <AppHeader titulo="Notícias" logo/>
 
       <ScrollView
         style={styles.scroll}
@@ -98,13 +100,18 @@ export default function NoticiasPage() {
         )}
       </ScrollView>
 
-      <BottomBar />
     </View>
+      <BottomBar />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container:{
+    flex: 1,
+    backgroundColor: Colors.roxo,
+  },
+  content: {
     flex: 1,
     backgroundColor: Colors.branco,
   },

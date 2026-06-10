@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import AppHeader from "@/components/AppHeader";
 import AppText from "@/components/AppText";
 import BottomBar from "@/components/BottomBar";
 import CardGrupo from "@/components/CardGrupo";
@@ -110,9 +111,7 @@ export default function GrupoPage() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ flex: 1, backgroundColor: Colors.branco }}>
-        <View style={styles.header}>
-          <AppText style={styles.headerTitle}>Grupos</AppText>
-        </View>
+        <AppHeader titulo="Grupos" logo/>
 
         <View style={styles.searchSection}>
           <View style={styles.searchRow}>

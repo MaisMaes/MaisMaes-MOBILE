@@ -1,3 +1,4 @@
+import AppHeader from "@/components/AppHeader";
 import AppText from "@/components/AppText";
 import BottomBar from "@/components/BottomBar";
 import CardGrupo from "@/components/CardGrupo";
@@ -26,6 +27,8 @@ export default function ChatsPage() {
 
   return (
     <SafeAreaView style={styles.container}>
+
+      <AppHeader titulo="Início" logo/>
 
       <View style={styles.content}>
         <View style={{flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20}}>
