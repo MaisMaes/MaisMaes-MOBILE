@@ -16,6 +16,7 @@ interface CardGrupoProps {
   isFavorito?: boolean;
   onPress?: () => void;
   onParticipar?: () => void;
+  onFavoritoAlterado?: () => void;
 }
 
 export default function CardGrupo({
@@ -26,6 +27,7 @@ export default function CardGrupo({
   isFavorito = false,
   onPress,
   onParticipar,
+  onFavoritoAlterado
 }: CardGrupoProps) {
   const router = useRouter();
   const [verificandoChat, setVerificandoChat] = useState(false);
@@ -86,6 +88,22 @@ export default function CardGrupo({
     }
   };
 
+  const handleFavorito = async () => {
+  try {
+    if (isFavorito) {
+      await GrupoTematicoService.removerFavorito(id);
+      PopupService.success("Grupo removido dos favoritos");
+    } else {
+      await GrupoTematicoService.favoritar(id);
+      PopupService.success("Grupo adicionado aos favoritos");
+    }
+
+    onFavoritoAlterado?.();
+  } catch (error) {
+    PopupService.error("Erro ao atualizar favorito");
+  }
+};
+
   return (
     <TouchableOpacity
       style={styles.card}
@@ -119,7 +137,7 @@ export default function CardGrupo({
       </View>
 
       <View style={styles.actionsContainer}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleFavorito}>
           <Ionicons
             name={isFavorito ? "heart" : "heart-outline"}
             size={26}
