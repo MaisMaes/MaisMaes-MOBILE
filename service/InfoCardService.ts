@@ -38,6 +38,11 @@ class InfoCardService {
     const response = await api.get<InfoCard[]>("/infocards/destaques");
     return response.data;
   }
+
+//   async buscarPorId(id: string): Promise<InfoCard> {
+//   const response = await api.get(`/infocard/${id}`);
+//   return response.data;
+// }
 }
 
 export default new InfoCardService();
