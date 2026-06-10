@@ -3,6 +3,7 @@ import { CriarGrupoRequest } from "./model/CriarGrupoRequest";
 import { DetalheGrupoResponseDTO } from "./model/DetalheGrupoResponseDTO";
 import { EditarGrupoRequest } from "./model/EditarGrupoRequest";
 import { ListarGrupoTematicoDTO } from "./model/ListarGrupoTematicoDTO";
+import { MembroStatusResponseDTO } from "./model/MembroStatusResponseDTO";
 
 class GrupoTematicoService {
   private BASE_URL = "grupo-tematico";
@@ -52,6 +53,29 @@ class GrupoTematicoService {
 
   async excluir(id: number): Promise<void> {
     await api.delete(`${this.BASE_URL}/excluir/${id}`);
+  }
+
+  async favoritar(grupoId: number): Promise<void> {
+  await api.post(`${this.BASE_URL}/${grupoId}/favoritos`);
+}
+
+async removerFavorito(grupoId: number): Promise<void> {
+  await api.delete(`${this.BASE_URL}/${grupoId}/favoritos`);
+}
+
+async listarFavoritos(): Promise<ListarGrupoTematicoDTO[]> {
+  const response = await api.get<ListarGrupoTematicoDTO[]>(
+    `${this.BASE_URL}/favoritos`,
+  );
+
+  return response.data;
+}
+
+  async verificarParticipacao(id: number): Promise<MembroStatusResponseDTO> {
+    const response = await api.get<MembroStatusResponseDTO>(
+      `${this.BASE_URL}/${id}/sou-participante`,
+    );
+    return response.data;
   }
 }
 

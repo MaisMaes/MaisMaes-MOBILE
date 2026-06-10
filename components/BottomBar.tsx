@@ -10,9 +10,9 @@ type Item = {
 };
 
 const items: Item[] = [
-  { label: "Chat", icon: "compass-outline", href: "/#" },
+  { label: "Início", icon: "home-outline", href: "/HomePage" },
   { label: "Grupos", icon: "chatbubble-outline", href: "/GrupoPage" },
-  { label: "Message", icon: "notifications-outline", href: "/#" },
+  { label: "Notícias", icon: "newspaper-outline", href: "/NoticiasPage" },
   { label: "Perfil", icon: "person-outline", href: "/profile" },
   
 ];
