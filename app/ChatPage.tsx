@@ -4,6 +4,7 @@ import ChatService from "@/service/ChatService";
 import GrupoTematicoService from "@/service/GrupoTematicoService";
 import TokenService from "@/service/TokenService";
 import { ChatMessage } from "@/service/model/ChatMessage";
+import PopupService from "@/utils/PopupService";
 import { Ionicons } from "@expo/vector-icons";
 import { Audio, ResizeMode, Video } from "expo-av";
 import * as DocumentPicker from "expo-document-picker";
@@ -121,7 +122,7 @@ export default function ChatPage() {
       setCursorHistorico(resposta.proximoCursor);
       setTemMaisHistorico(resposta.temMais);
     } catch (error) {
-      console.error("[ChatPage] Erro ao carregar histórico", error);
+      PopupService.error("Falha ao carregar histórico.");
       setStatusConexao("Falha ao carregar histórico.");
     } finally {
       if (prepend) {
@@ -148,7 +149,7 @@ export default function ChatPage() {
           );
         }
       } catch (error) {
-        console.error("[ChatPage] Erro ao decodificar token", error);
+        PopupService.error("Erro ao identificar usuário.");
       }
     }
 
@@ -168,7 +169,7 @@ export default function ChatPage() {
         });
       })
       .catch((error) => {
-        console.error("[ChatPage] Erro ao carregar permissões do grupo", error);
+        PopupService.error("Erro ao carregar permissões do grupo.");
       });
   }, [grupoIdNumerico]);
 
@@ -249,7 +250,7 @@ export default function ChatPage() {
       deveAutoScrollRef.current = true;
       ChatService.enviarMensagem(mensagem);
     } catch (error) {
-      console.error("[ChatPage] Erro ao enviar arquivo", error);
+      PopupService.error("Erro ao enviar arquivo.");
     } finally {
       setEnviandoArquivo(false);
     }
@@ -323,7 +324,7 @@ export default function ChatPage() {
           );
         }
       } catch (error) {
-        console.error("[ChatPage] Erro ao parar gravação", error);
+        PopupService.error("Erro ao parar gravação.");
         setGravandoAudio(false);
       }
       return;
@@ -342,7 +343,7 @@ export default function ChatPage() {
       recordingRef.current = recording;
       setGravandoAudio(true);
     } catch (error) {
-      console.error("[ChatPage] Erro ao iniciar gravação", error);
+      PopupService.error("Erro ao iniciar gravação.");
     }
   };
 
@@ -372,7 +373,7 @@ export default function ChatPage() {
         }
       });
     } catch (error) {
-      console.error("[ChatPage] Erro ao reproduzir áudio", error);
+      PopupService.error("Erro ao reproduzir áudio.");
       setAudioPlayingId(null);
     }
   };

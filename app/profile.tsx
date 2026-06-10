@@ -1,25 +1,19 @@
 import AppHeader from "@/components/AppHeader";
 import BottomBar from "@/components/BottomBar";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
-import TokenService from "@/service/TokenService";
+import UsuarioService, { UsuarioMe } from "@/service/UsuarioService";
 import PopupService from "@/utils/PopupService";
-import axios from "axios";
-import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type Usuario = {
-  nome: string;
-  email: string;
-  telefone: string;
-};
+type Usuario = UsuarioMe;
 
 export default function Profile() {
   const [nome, setNome] = useState("");
@@ -31,19 +25,7 @@ export default function Profile() {
 
   async function buscarUsuario() {
     try {
-      const token = await TokenService.getToken();
-
-      const response = await axios.get(
-        "http://192.168.137.194:8080/usuario/me",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      const data = response.data;
-
+      const data = await UsuarioService.me();
       setNome(data.nome);
       setEmail(data.email);
       setTelefone(data.telefone);
@@ -55,23 +37,7 @@ export default function Profile() {
 
   async function atualizarUsuario() {
     try {
-      const token = await TokenService.getToken();
-
-      await axios.patch(
-        "http://192.168.137.194:8080/usuario/atualizar",
-        {
-          nome,
-          email,
-          telefone,
-          senha,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
+      await UsuarioService.atualizar({ nome, email, telefone, senha });
       PopupService.success("Perfil atualizado com sucesso!");
       setEditando(false);
     } catch (error) {
@@ -95,7 +61,6 @@ export default function Profile() {
     setEditando(false);
   }
 
-  const router = useRouter();
   return (
     <SafeAreaView style={styles.container}>
       <AppHeader titulo="Perfil" logo />
