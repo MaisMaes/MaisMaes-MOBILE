@@ -1,30 +1,56 @@
+import AppText from "@/components/AppText";
+import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
+import { InfoCard } from "@/service/InfoCardService";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-
-import { Colors, Fonts, GlobalFontSize } from "../constants/GlobalStyles";
-import { InfoCard } from "../service/InfoCardService";
-import AppText from "./AppText";
 
 interface CardNoticiaProps {
   noticia: InfoCard;
   onPress: () => void;
 }
 
-export default function CardNoticia({ noticia, onPress }: CardNoticiaProps) {
-  const dataFormatada = new Date(noticia.dataCriacao).toLocaleDateString("pt-BR", {
+export default function CardNoticia({
+  noticia,
+  onPress,
+}: CardNoticiaProps) {
+  const dataFormatada = new Date(
+    noticia.dataCriacao
+  ).toLocaleDateString("pt-BR", {
     day: "2-digit",
-    month: "long",
+    month: "short",
     year: "numeric",
   });
 
   return (
-    <Pressable style={styles.card} onPress={onPress}>
-      <View>
-        <AppText style={styles.titulo}>{noticia.titulo}</AppText>
+    <Pressable
+      style={styles.card}
+      onPress={onPress}
+    >
+      <View style={styles.iconContainer}>
+        <Ionicons
+          name="newspaper-outline"
+          size={28}
+          color={Colors.grafite}
+        />
+      </View>
 
-        <AppText style={styles.data}>{dataFormatada}</AppText>
+      <View style={styles.infoContainer}>
+        <AppText
+          style={styles.titulo}
+          numberOfLines={1}
+        >
+          {noticia.titulo}
+        </AppText>
 
-        <AppText style={styles.descricao} numberOfLines={3}>
+        <AppText style={styles.data}>
+          {dataFormatada}
+        </AppText>
+
+        <AppText
+          style={styles.descricao}
+          numberOfLines={2}
+        >
           {noticia.descricao}
         </AppText>
       </View>
@@ -34,35 +60,59 @@ export default function CardNoticia({ noticia, onPress }: CardNoticiaProps) {
 
 const styles = StyleSheet.create({
   card: {
+    flexDirection: "row",
     backgroundColor: Colors.branco,
-    borderRadius: 12,
-    padding: 16,
+    borderWidth: 1.5,
+    borderColor: Colors.grafite,
+    borderRadius: 20,
+    padding: 12,
     marginBottom: 12,
+    alignItems: "center",
+
+    elevation: 2,
     shadowColor: Colors.grafite,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
   },
+
+  iconContainer: {
+    width: 65,
+    height: 65,
+    backgroundColor: Colors.azulClaro,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: Colors.grafite,
+  },
+
+  infoContainer: {
+    flex: 1,
+    paddingHorizontal: 12,
+    justifyContent: "center",
+  },
+
   titulo: {
     fontFamily: Fonts.semiBold,
     fontSize: GlobalFontSize.subtitle,
     color: Colors.grafite,
-    marginBottom: 4,
   },
+
   data: {
     fontFamily: Fonts.regular,
-    fontSize: 12,
+    fontSize: 11,
     color: Colors.cinzaClaro,
-    marginBottom: 8,
+    marginTop: 2,
   },
+
   descricao: {
     fontFamily: Fonts.regular,
     fontSize: GlobalFontSize.text,
-    color: Colors.grafite,
-    lineHeight: 20,
+    color: Colors.cinzaClaro,
+    marginTop: 4,
   },
 });
