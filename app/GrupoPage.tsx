@@ -180,8 +180,8 @@ export default function GrupoPage() {
           )}
         </ScrollView>
       )}
-      <BottomBar />
       </View>
+      <BottomBar />
     </SafeAreaView>
   );
 }
@@ -201,9 +201,9 @@ const styles = StyleSheet.create({
     paddingRight: 30,
   },
   headerTitle: {
-    fontSize: GlobalFontSize.title,
+    fontSize: GlobalFontSize.subtitle,
     fontFamily: Fonts.bold,
-    color: Colors.branco,
+    color: Colors.branco
   },
 
   searchSection: {

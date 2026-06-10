@@ -29,7 +29,7 @@ export default function BottomBar() {
         justifyContent: "space-around",
         padding: 10,
         position: "absolute",
-        bottom: 55,
+        bottom: 60,
         width: "90%",
         backgroundColor: Colors.branco,
         borderRadius: 50,
