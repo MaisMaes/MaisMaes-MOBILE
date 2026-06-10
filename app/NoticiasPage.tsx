@@ -8,14 +8,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { SafeAreaFrameContext, SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView
+} from "react-native-safe-area-context";
 
 export default function NoticiasPage() {
   const [noticias, setNoticias] = useState<InfoCard[]>([]);
@@ -54,60 +56,58 @@ export default function NoticiasPage() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        <AppHeader titulo="Notícias" logo />
 
-      <AppHeader titulo="Notícias" logo/>
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Pesquisar..."
-            placeholderTextColor={Colors.grafite}
-            value={pesquisa}
-            onChangeText={setPesquisa}
-            returnKeyType="search"
-            onSubmitEditing={carregarNoticias}
-          />
-
-          <TouchableOpacity
-            style={styles.searchButton}
-            onPress={carregarNoticias}
-          >
-            <Ionicons name="search" size={20} color={Colors.branco} />
-          </TouchableOpacity>
-        </View>
-
-        <AppText style={styles.sectionTitle}>Últimas notícias</AppText>
-
-        {carregando ? (
-          <ActivityIndicator
-            style={styles.loading}
-            size="large"
-            color={Colors.roxo}
-          />
-        ) : (
-          noticias.map((noticia) => (
-            <CardNoticia
-              key={noticia.id}
-              noticia={noticia}
-              onPress={() => abrirDetalheNoticia(noticia.id)}
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Pesquisar..."
+              placeholderTextColor={Colors.grafite}
+              value={pesquisa}
+              onChangeText={setPesquisa}
+              returnKeyType="search"
+              onSubmitEditing={carregarNoticias}
             />
-          ))
-        )}
-      </ScrollView>
 
-    </View>
+            <TouchableOpacity
+              style={styles.searchButton}
+              onPress={carregarNoticias}
+            >
+              <Ionicons name="search" size={20} color={Colors.branco} />
+            </TouchableOpacity>
+          </View>
+
+          <AppText style={styles.sectionTitle}>Últimas notícias</AppText>
+
+          {carregando ? (
+            <ActivityIndicator
+              style={styles.loading}
+              size="large"
+              color={Colors.roxo}
+            />
+          ) : (
+            noticias.map((noticia) => (
+              <CardNoticia
+                key={noticia.id}
+                noticia={noticia}
+                onPress={() => abrirDetalheNoticia(noticia.id)}
+              />
+            ))
+          )}
+        </ScrollView>
+      </View>
       <BottomBar />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container:{
+  container: {
     flex: 1,
     backgroundColor: Colors.roxo,
   },

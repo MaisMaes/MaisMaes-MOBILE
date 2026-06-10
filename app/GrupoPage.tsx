@@ -111,18 +111,12 @@ export default function GrupoPage() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ flex: 1, backgroundColor: Colors.branco }}>
-        <AppHeader titulo="Grupos" logo/>
+        <AppHeader titulo="Grupos" logo />
 
         <View style={styles.searchSection}>
           <View style={styles.searchRow}>
-            <TouchableOpacity
-              onPress={() => router.push("/CriarGrupoPage")}
-            >
-              <Ionicons
-                name="add-circle"
-                size={50}
-                color={Colors.azulEscuro}
-              />
+            <TouchableOpacity onPress={() => router.push("/CriarGrupoPage")}>
+              <Ionicons name="add-circle" size={50} color={Colors.azulEscuro} />
             </TouchableOpacity>
 
             <View style={styles.inputWrapper}>
@@ -138,35 +132,26 @@ export default function GrupoPage() {
                 onPress={() => carregarDados(busca)}
                 style={styles.searchButton}
               >
-                <Ionicons
-                  name="search"
-                  size={20}
-                  color={Colors.branco}
-                />
+                <Ionicons name="search" size={20} color={Colors.branco} />
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.categoriesContainer}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-            >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {CATEGORIAS.map((cat) => (
                 <TouchableOpacity
                   key={cat}
                   style={[
                     styles.categoryPill,
-                    categoriaAtiva === cat &&
-                      styles.categoryPillActive,
+                    categoriaAtiva === cat && styles.categoryPillActive,
                   ]}
                   onPress={() => handleCategoriaPress(cat)}
                 >
                   <AppText
                     style={[
                       styles.categoryText,
-                      categoriaAtiva === cat &&
-                        styles.categoryTextActive,
+                      categoriaAtiva === cat && styles.categoryTextActive,
                     ]}
                   >
                     {cat}
@@ -179,22 +164,14 @@ export default function GrupoPage() {
 
         {carregando && carregandoMeus && carregandoFavoritos ? (
           <View style={styles.center}>
-            <ActivityIndicator
-              size="large"
-              color={Colors.roxo}
-            />
+            <ActivityIndicator size="large" color={Colors.roxo} />
           </View>
         ) : (
           <ScrollView contentContainerStyle={styles.list}>
-            <AppText style={styles.sectionTitle}>
-              Estou participando
-            </AppText>
+            <AppText style={styles.sectionTitle}>Estou participando</AppText>
 
             {carregandoMeus ? (
-              <ActivityIndicator
-                size="small"
-                color={Colors.roxo}
-              />
+              <ActivityIndicator size="small" color={Colors.roxo} />
             ) : meusGrupos.length === 0 ? (
               <AppText style={styles.emptyText}>
                 Você ainda não participa de nenhum grupo.
@@ -207,25 +184,18 @@ export default function GrupoPage() {
                   titulo={item.titulo}
                   descricao={item.descricao}
                   bairros={item.bairros}
-                  isFavorito={favoritos.some(
-                    (f) => f.id === item.id,
-                  )}
+                  isFavorito={favoritos.some((f) => f.id === item.id)}
                   onFavoritoAlterado={atualizarTudo}
                 />
               ))
             )}
 
-            <AppText
-              style={[styles.sectionTitle, { marginTop: 20 }]}
-            >
+            <AppText style={[styles.sectionTitle, { marginTop: 20 }]}>
               Favoritos
             </AppText>
 
             {carregandoFavoritos ? (
-              <ActivityIndicator
-                size="small"
-                color={Colors.roxo}
-              />
+              <ActivityIndicator size="small" color={Colors.roxo} />
             ) : favoritos.length === 0 ? (
               <AppText style={styles.emptyText}>
                 Nenhum grupo favoritado.
@@ -244,17 +214,12 @@ export default function GrupoPage() {
               ))
             )}
 
-            <AppText
-              style={[styles.sectionTitle, { marginTop: 20 }]}
-            >
+            <AppText style={[styles.sectionTitle, { marginTop: 20 }]}>
               Outros grupos
             </AppText>
 
             {carregando ? (
-              <ActivityIndicator
-                size="small"
-                color={Colors.roxo}
-              />
+              <ActivityIndicator size="small" color={Colors.roxo} />
             ) : grupos.filter(
                 (g) =>
                   !meusGrupos.some((m) => m.id === g.id) &&
@@ -285,9 +250,8 @@ export default function GrupoPage() {
             )}
           </ScrollView>
         )}
-
       </View>
-        <BottomBar />
+      <BottomBar />
     </SafeAreaView>
   );
 }
@@ -309,7 +273,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: GlobalFontSize.subtitle,
     fontFamily: Fonts.bold,
-    color: Colors.branco
+    color: Colors.branco,
   },
   searchSection: {
     paddingHorizontal: 20,

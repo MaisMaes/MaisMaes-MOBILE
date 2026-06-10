@@ -11,16 +11,22 @@ interface AppHeaderProps {
   logo?: boolean;
 }
 
-export default function AppHeader({ titulo, showBack, subtitulo, logo }: AppHeaderProps) {
+export default function AppHeader({
+  titulo,
+  showBack,
+  subtitulo,
+  logo,
+}: AppHeaderProps) {
   const router = useRouter();
 
   return (
     <View style={styles.header}>
-      {logo && (
-        <AppText style={styles.logo}>+Mães</AppText>
-      )}
+      {logo && <AppText style={styles.logo}>+Mães</AppText>}
       {showBack && (
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
           <Ionicons name="arrow-back" size={24} color={Colors.branco} />
         </TouchableOpacity>
       )}
