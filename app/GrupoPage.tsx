@@ -287,8 +287,8 @@ export default function GrupoPage() {
           </ScrollView>
         )}
 
-        <BottomBar />
       </View>
+        <BottomBar />
     </SafeAreaView>
   );
 }

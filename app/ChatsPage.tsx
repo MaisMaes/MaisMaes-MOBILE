@@ -29,8 +29,7 @@ export default function ChatsPage() {
 
       <View style={styles.content}>
         <View style={{flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20}}>
-            <AppText style={{fontSize: GlobalFontSize.title, color: Colors.azulEscuro}}>Grupos</AppText>
-            <AppText style={{fontSize: GlobalFontSize.subtitle, color: Colors.cinzaClaro}}>Ver mais</AppText>
+            <AppText style={{fontSize: GlobalFontSize.title, color: Colors.azulEscuro}}>Meus Grupos</AppText>
         </View>
         <View>
             {meusGrupos.map((item) => (

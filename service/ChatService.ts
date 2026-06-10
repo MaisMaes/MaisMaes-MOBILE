@@ -9,7 +9,7 @@ import { HistoricoMensagensResponse } from "./model/HistoricoMensagensResponse";
 type MessageHandler = (message: ChatMessage) => void;
 
 class ChatService {
-  private readonly CHAT_URL = "http://192.168.1.11:8080/chat";
+  private readonly CHAT_URL = "http://192.168.1.109:8080/chat";
   private client: any = null;
   private subscription: any = null;
 
@@ -51,7 +51,7 @@ class ChatService {
   }
 
   urlArquivo(fileId: string): string {
-    return `http://192.168.1.11:8080/arquivo/${fileId}`;
+    return `http://192.168.1.109:8080/arquivo/${fileId}`;
   }
 
   conectar(
