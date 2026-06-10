@@ -1,20 +1,18 @@
 import AppHeader from "@/components/AppHeader";
-import TokenService from "@/service/TokenService";
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
-} from "react-native";
-import { useRouter } from "expo-router";
-import axios from "axios";
-import { useState, useEffect } from "react";
 import BottomBar from "@/components/BottomBar";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
+import TokenService from "@/service/TokenService";
 import PopupService from "@/utils/PopupService";
-import AppText from "@/components/AppText";
+import axios from "axios";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type Usuario = {
@@ -100,8 +98,7 @@ export default function Profile() {
   const router = useRouter();
   return (
     <SafeAreaView style={styles.container}>
-      
-      <AppHeader titulo="Perfil" logo/>
+      <AppHeader titulo="Perfil" logo />
 
       <View style={styles.content}>
         <View style={styles.avatar} />

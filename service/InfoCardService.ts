@@ -22,9 +22,12 @@ class InfoCardService {
   }
 
   async buscarPorTitulo(titulo: string): Promise<InfoCard[]> {
-    const response = await api.get<PageResponse<InfoCard>>("/infocards/buscar", {
-      params: { titulo },
-    });
+    const response = await api.get<PageResponse<InfoCard>>(
+      "/infocards/buscar",
+      {
+        params: { titulo },
+      },
+    );
 
     return response.data.content;
   }
@@ -35,14 +38,16 @@ class InfoCardService {
   }
 
   async listarDestaques(): Promise<InfoCard[]> {
-    const response = await api.get<InfoCard[]>("/infocards/destaques");
-    return response.data;
+    const response = await api.get<PageResponse<InfoCard>>(
+      "/infocards/destaques",
+    );
+    return response.data.content ?? [];
   }
 
-//   async buscarPorId(id: string): Promise<InfoCard> {
-//   const response = await api.get(`/infocard/${id}`);
-//   return response.data;
-// }
+  //   async buscarPorId(id: string): Promise<InfoCard> {
+  //   const response = await api.get(`/infocard/${id}`);
+  //   return response.data;
+  // }
 }
 
 export default new InfoCardService();
