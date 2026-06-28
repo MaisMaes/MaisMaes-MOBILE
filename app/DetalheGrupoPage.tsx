@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   ScrollView,
   StyleSheet,
   Switch,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -86,6 +87,11 @@ export default function DetalheGrupoPage() {
   const [showBairros, setShowBairros] = useState(false);
   const [verificandoChat, setVerificandoChat] = useState(false);
   const [eParticipante, setEParticipante] = useState<boolean | null>(null);
+
+  //Denunciar grupo
+  const [showDenunciaModal, setShowDenunciaModal] = useState(false);
+  const [descricaoDenuncia, setDescricaoDenuncia] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
 
   const carregarDetalhes = async () => {
     try {
@@ -230,6 +236,39 @@ export default function DetalheGrupoPage() {
     );
   };
 
+  const handleDenunciar = async () => {
+  console.log("HANDLE DENUNCIAR");
+
+  if (!descricaoDenuncia.trim()) {
+    PopupService.info("Informe o motivo da denúncia.");
+    return;
+  }
+
+  try {
+    console.log("ENVIANDO DENUNCIA");
+
+    await GrupoTematicoService.denunciar(
+      Number(id),
+      descricaoDenuncia.trim(),
+    );
+
+    console.log("DENUNCIA ENVIADA");
+
+    PopupService.success("Denúncia enviada com sucesso!");
+
+    setDescricaoDenuncia("");
+    setShowDenunciaModal(false);
+  } catch (error: any) {
+    console.log("ERRO DENUNCIA", error);
+
+    const message =
+      error?.response?.data?.error ??
+      "Erro ao enviar denúncia.";
+
+    PopupService.error(message);
+  }
+};
+
   if (carregando) {
     return (
       <SafeAreaView style={styles.container}>
@@ -320,11 +359,92 @@ export default function DetalheGrupoPage() {
                   </View>
                 ))}
               </View>
+              
+              <View style={styles.participantesHeader}>
+                <AppText style={styles.sectionTitle}>
+                  Participantes ({grupo.participantes.length}/{grupo.numeroParticipantes})
+                </AppText>
 
-              <AppText style={styles.sectionTitle}>
-                Participantes ({grupo.participantes.length}/
-                {grupo.numeroParticipantes})
-              </AppText>
+                {grupo.usuarioLogadoEParticipante && (
+                  <View style={{ position: "relative" }}>
+                    <TouchableOpacity
+                      onPress={() => setShowMenu(!showMenu)}
+                    >
+                      <Ionicons
+                        name="ellipsis-vertical"
+                        size={22}
+                        color={Colors.grafite}
+                      />
+                    </TouchableOpacity>
+
+                    {showMenu && (
+                      <View style={styles.dropdownMenu}>
+                        <TouchableOpacity
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            setShowMenu(false);
+                            setShowDenunciaModal(true);
+                          }}
+                        >
+                          <AppText style={styles.dropdownText}>
+                            Denunciar grupo
+                          </AppText>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </View>
+              <Modal
+                visible={showDenunciaModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowDenunciaModal(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalBox}>
+                    <AppText style={styles.sectionTitle}>
+                      Denunciar grupo
+                    </AppText>
+
+                    <AppText style={{ marginBottom: 10 }}>
+                      Informe o motivo da denúncia:
+                    </AppText>
+
+                    <TextInput
+                      value={descricaoDenuncia}
+                      onChangeText={setDescricaoDenuncia}
+                      multiline
+                      placeholder="Descreva o motivo da denúncia..."
+                      style={[styles.input, styles.textArea]}
+                    />
+
+                    <View style={styles.modalActions}>
+                      <TouchableOpacity
+                        style={styles.btnCancelar}
+                        onPress={() => {
+                          setDescricaoDenuncia("");
+                          setShowDenunciaModal(false);
+                        }}
+                      >
+                        <AppText style={styles.btnCancelarText}>
+                          Cancelar
+                        </AppText>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.btnSalvar}
+                        onPress={handleDenunciar}
+                      >
+                        <AppText style={styles.btnSalvarText}>
+                          Enviar
+                        </AppText>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </Modal>
+
               {grupo.participantes.length === 0 ? (
                 <AppText style={styles.emptyText}>
                   Nenhum participante ainda.
@@ -533,7 +653,10 @@ export default function DetalheGrupoPage() {
         loading={verificandoChat}
         disabled={eParticipante === false}
       />
-    </SafeAreaView>
+
+</SafeAreaView>
+
+    
   );
 }
 
@@ -799,4 +922,74 @@ const styles = StyleSheet.create({
     fontSize: GlobalFontSize.subtitle,
     color: Colors.branco,
   },
+participantesHeader: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  zIndex: 9999,
+},
+  menuBox: {
+    position: "absolute",
+    right: 20,
+    top: 5,
+    backgroundColor: Colors.branco,
+    borderRadius: 8,
+    padding: 10,
+    elevation: 5,
+  },
+  menuItem: {
+    paddingVertical: 8,
+  },
+  menuText: {
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+    color: Colors.grafite,
+  },
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#00000088",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalBox: {
+    width: "85%",
+    backgroundColor: Colors.branco,
+    borderRadius: 15,
+    padding: 20,
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 15,
+  },
+  dropdownMenu: {
+    position: "absolute",
+    top: 35,
+    right: 0,
+    backgroundColor: Colors.branco,
+    borderRadius: 10,
+    minWidth: 160,
+
+    zIndex: 99999,
+    elevation: 999,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+  },
+  dropdownItem: {
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+  },
+  dropdownText: {
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+    color: Colors.grafite,
+  },
+
+
 });
