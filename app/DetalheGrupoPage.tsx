@@ -237,37 +237,25 @@ export default function DetalheGrupoPage() {
   };
 
   const handleDenunciar = async () => {
-  console.log("HANDLE DENUNCIAR");
+    if (!descricaoDenuncia.trim()) {
+      PopupService.info("Informe o motivo da denúncia.");
+      return;
+    }
 
-  if (!descricaoDenuncia.trim()) {
-    PopupService.info("Informe o motivo da denúncia.");
-    return;
-  }
-
-  try {
-    console.log("ENVIANDO DENUNCIA");
-
-    await GrupoTematicoService.denunciar(
-      Number(id),
-      descricaoDenuncia.trim(),
-    );
-
-    console.log("DENUNCIA ENVIADA");
-
-    PopupService.success("Denúncia enviada com sucesso!");
-
-    setDescricaoDenuncia("");
-    setShowDenunciaModal(false);
-  } catch (error: any) {
-    console.log("ERRO DENUNCIA", error);
-
-    const message =
-      error?.response?.data?.error ??
-      "Erro ao enviar denúncia.";
-
-    PopupService.error(message);
-  }
-};
+    try {
+      await GrupoTematicoService.denunciar(
+        Number(id),
+        descricaoDenuncia.trim(),
+      );
+      PopupService.success("Denúncia enviada com sucesso!");
+      setDescricaoDenuncia("");
+      setShowDenunciaModal(false);
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.error ?? "Erro ao enviar denúncia.";
+      PopupService.error(message);
+    }
+  };
 
   if (carregando) {
     return (
@@ -973,22 +961,27 @@ participantesHeader: {
     backgroundColor: Colors.branco,
     borderRadius: 10,
     minWidth: 160,
-
     zIndex: 99999,
     elevation: 999,
-
+    borderWidth: 1,
+    borderColor: Colors.cinzaClaro,
     shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
   },
   dropdownItem: {
     paddingHorizontal: 15,
     paddingVertical: 12,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   dropdownText: {
-    fontFamily: Fonts.regular,
+    fontFamily: Fonts.semiBold,
     fontSize: 14,
-    color: Colors.grafite,
+    color: Colors.rosa,
   },
 
 
