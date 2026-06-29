@@ -77,9 +77,14 @@ export default function CardGrupo({
 
   const onAddPress = async () => {
     try {
-      await GrupoTematicoService.participar(id);
-      PopupService.success("Você entrou no grupo com sucesso!");
-      onParticipar?.();
+      const mensagem = await GrupoTematicoService.participar(id);
+      const isPendente = mensagem?.toLowerCase().includes("pedido");
+      if (isPendente) {
+        PopupService.info(mensagem);
+      } else {
+        PopupService.success(mensagem ?? "Você entrou no grupo com sucesso!");
+        onParticipar?.();
+      }
     } catch (error: any) {
       const message =
         error?.response?.data?.error ??

@@ -16,4 +16,6 @@ export interface DetalheGrupoResponseDTO {
   participantes: ParticipanteGrupoResumoResponseDTO[];
   usuarioLogadoEParticipante: boolean;
   usuarioLogadoRole: string;
+  /** true quando o usuário logado possui pedido de entrada PENDENTE neste grupo */
+  usuarioLogadoAguardandoAprovacao?: boolean;
 }

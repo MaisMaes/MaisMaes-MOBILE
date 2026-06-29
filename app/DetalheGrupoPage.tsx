@@ -19,6 +19,7 @@ import ChatBubbleIcon from "@/components/ChatBubbleIcon";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
 import GrupoTematicoService from "@/service/GrupoTematicoService";
 import { DetalheGrupoResponseDTO } from "@/service/model/DetalheGrupoResponseDTO";
+import { PedidoEntradaResponseDTO } from "@/service/model/PedidoEntradaResponseDTO";
 import PopupService from "@/utils/PopupService";
 
 const CATEGORIAS = [
@@ -93,13 +94,28 @@ export default function DetalheGrupoPage() {
   const [descricaoDenuncia, setDescricaoDenuncia] = useState("");
   const [showMenu, setShowMenu] = useState(false);
 
+  // Pedidos de entrada
+  const [pedidosEntrada, setPedidosEntrada] = useState<PedidoEntradaResponseDTO[]>([]);
+  const [respondendoPedido, setRespondendoPedido] = useState<number | null>(null);
+
   const carregarDetalhes = async () => {
     try {
       setCarregando(true);
       const data = await GrupoTematicoService.buscarDetalhes(Number(id));
       setGrupo(data);
-      // usa o campo já disponível no DTO para evitar chamada extra
       setEParticipante(data.usuarioLogadoEParticipante);
+
+      const podeVerPedidos =
+        data.usuarioLogadoRole === "CRIADORA" ||
+        data.usuarioLogadoRole === "MODERADORA";
+      if (podeVerPedidos) {
+        try {
+          const pedidos = await GrupoTematicoService.listarPedidosEntrada(Number(id));
+          setPedidosEntrada(pedidos);
+        } catch {
+          // silencia: usuário pode não ter permissão ainda
+        }
+      }
     } catch {
       PopupService.error("Erro ao carregar detalhes do grupo.");
       router.back();
@@ -257,6 +273,21 @@ export default function DetalheGrupoPage() {
     }
   };
 
+  const handleResponderPedido = async (pedidoId: number, aprovado: boolean) => {
+    setRespondendoPedido(pedidoId);
+    try {
+      await GrupoTematicoService.responderPedidoEntrada(Number(id), pedidoId, aprovado);
+      PopupService.success(aprovado ? "Pedido aprovado!" : "Pedido rejeitado.");
+      setPedidosEntrada((prev) => prev.filter((p) => p.pedidoId !== pedidoId));
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.error ?? "Erro ao responder pedido.";
+      PopupService.error(message);
+    } finally {
+      setRespondendoPedido(null);
+    }
+  };
+
   if (carregando) {
     return (
       <SafeAreaView style={styles.container}>
@@ -336,6 +367,16 @@ export default function DetalheGrupoPage() {
                   </View>
                 )}
               </View>
+
+              {/* Banner: aguardando aprovação */}
+              {grupo.usuarioLogadoAguardandoAprovacao && (
+                <View style={styles.bannerPendente}>
+                  <Ionicons name="time-outline" size={18} color={Colors.azulEscuro} />
+                  <AppText style={styles.bannerPendenteText}>
+                    Seu pedido de entrada está aguardando aprovação da criadora.
+                  </AppText>
+                </View>
+              )}
 
               <AppText style={styles.sectionTitle}>Bairros</AppText>
               <View style={styles.tagsContainer}>
@@ -453,6 +494,59 @@ export default function DetalheGrupoPage() {
                   ))}
                 </View>
               )}
+
+              {/* Seção de pedidos de entrada pendentes (criadora/moderadora) */}
+              {(grupo.usuarioLogadoRole === "CRIADORA" ||
+                grupo.usuarioLogadoRole === "MODERADORA") &&
+                pedidosEntrada.length > 0 && (
+                  <>
+                    <AppText style={[styles.sectionTitle, { marginTop: 20 }]}>
+                      Pedidos de entrada ({pedidosEntrada.length})
+                    </AppText>
+                    {pedidosEntrada.map((pedido) => (
+                      <View key={pedido.pedidoId} style={styles.pedidoItem}>
+                        <View style={styles.pedidoInfo}>
+                          <Ionicons
+                            name="person-add-outline"
+                            size={24}
+                            color={Colors.roxo}
+                          />
+                          <AppText style={styles.pedidoNome}>
+                            {pedido.nomeUsuario}
+                          </AppText>
+                        </View>
+                        <View style={styles.pedidoAcoes}>
+                          <TouchableOpacity
+                            style={styles.btnRejeitar}
+                            disabled={respondendoPedido === pedido.pedidoId}
+                            onPress={() =>
+                              handleResponderPedido(pedido.pedidoId, false)
+                            }
+                          >
+                            {respondendoPedido === pedido.pedidoId ? (
+                              <ActivityIndicator size="small" color={Colors.rosa} />
+                            ) : (
+                              <Ionicons name="close" size={18} color={Colors.rosa} />
+                            )}
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.btnAprovar}
+                            disabled={respondendoPedido === pedido.pedidoId}
+                            onPress={() =>
+                              handleResponderPedido(pedido.pedidoId, true)
+                            }
+                          >
+                            {respondendoPedido === pedido.pedidoId ? (
+                              <ActivityIndicator size="small" color={Colors.branco} />
+                            ) : (
+                              <Ionicons name="checkmark" size={18} color={Colors.branco} />
+                            )}
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ))}
+                  </>
+                )}
             </>
           ) : (
             // ── MODO EDIÇÃO ────────────────────────────────────────────
@@ -976,5 +1070,63 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semiBold,
     fontSize: 14,
     color: Colors.rosa,
+  },
+  bannerPendente: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: Colors.azulClaro,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.azulEscuro,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 20,
+  },
+  bannerPendenteText: {
+    flex: 1,
+    fontFamily: Fonts.regular,
+    fontSize: 13,
+    color: Colors.azulEscuro,
+    lineHeight: 18,
+  },
+  pedidoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.cinzaClaro,
+  },
+  pedidoInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  pedidoNome: {
+    fontFamily: Fonts.regular,
+    fontSize: GlobalFontSize.text,
+    color: Colors.grafite,
+  },
+  pedidoAcoes: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  btnAprovar: {
+    backgroundColor: Colors.roxo,
+    borderRadius: 20,
+    width: 34,
+    height: 34,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  btnRejeitar: {
+    borderWidth: 1.5,
+    borderColor: Colors.rosa,
+    borderRadius: 20,
+    width: 34,
+    height: 34,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

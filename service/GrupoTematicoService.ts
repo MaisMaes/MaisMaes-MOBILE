@@ -4,6 +4,7 @@ import { DetalheGrupoResponseDTO } from "./model/DetalheGrupoResponseDTO";
 import { EditarGrupoRequest } from "./model/EditarGrupoRequest";
 import { ListarGrupoTematicoDTO } from "./model/ListarGrupoTematicoDTO";
 import { MembroStatusResponseDTO } from "./model/MembroStatusResponseDTO";
+import { PedidoEntradaResponseDTO } from "./model/PedidoEntradaResponseDTO";
 
 class GrupoTematicoService {
   private BASE_URL = "grupo-tematico";
@@ -29,8 +30,28 @@ class GrupoTematicoService {
     return response.data;
   }
 
-  async participar(grupoId: number): Promise<void> {
-    await api.post(`${this.BASE_URL}/${grupoId}/entrar`);
+  async participar(grupoId: number): Promise<string> {
+    const response = await api.post<string>(`${this.BASE_URL}/${grupoId}/entrar`);
+    return response.data;
+  }
+
+  async listarPedidosEntrada(grupoId: number): Promise<PedidoEntradaResponseDTO[]> {
+    const response = await api.get<PedidoEntradaResponseDTO[]>(
+      `${this.BASE_URL}/${grupoId}/pedidos-entrada`,
+    );
+    return response.data;
+  }
+
+  async responderPedidoEntrada(
+    grupoId: number,
+    pedidoId: number,
+    aprovado: boolean,
+  ): Promise<PedidoEntradaResponseDTO> {
+    const response = await api.patch<PedidoEntradaResponseDTO>(
+      `${this.BASE_URL}/${grupoId}/pedidos-entrada/${pedidoId}`,
+      { aprovado },
+    );
+    return response.data;
   }
 
   async listarMeusGrupos(): Promise<ListarGrupoTematicoDTO[]> {
