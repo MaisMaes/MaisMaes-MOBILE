@@ -2,15 +2,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -347,17 +347,16 @@ export default function DetalheGrupoPage() {
                   </View>
                 ))}
               </View>
-              
+
               <View style={styles.participantesHeader}>
                 <AppText style={styles.sectionTitle}>
-                  Participantes ({grupo.participantes.length}/{grupo.numeroParticipantes})
+                  Participantes ({grupo.participantes.length}/
+                  {grupo.numeroParticipantes})
                 </AppText>
 
                 {grupo.usuarioLogadoEParticipante && (
                   <View style={{ position: "relative" }}>
-                    <TouchableOpacity
-                      onPress={() => setShowMenu(!showMenu)}
-                    >
+                    <TouchableOpacity onPress={() => setShowMenu(!showMenu)}>
                       <Ionicons
                         name="ellipsis-vertical"
                         size={22}
@@ -424,9 +423,7 @@ export default function DetalheGrupoPage() {
                         style={styles.btnSalvar}
                         onPress={handleDenunciar}
                       >
-                        <AppText style={styles.btnSalvarText}>
-                          Enviar
-                        </AppText>
+                        <AppText style={styles.btnSalvarText}>Enviar</AppText>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -641,10 +638,7 @@ export default function DetalheGrupoPage() {
         loading={verificandoChat}
         disabled={eParticipante === false}
       />
-
-</SafeAreaView>
-
-    
+    </SafeAreaView>
   );
 }
 
@@ -910,12 +904,12 @@ const styles = StyleSheet.create({
     fontSize: GlobalFontSize.subtitle,
     color: Colors.branco,
   },
-participantesHeader: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  zIndex: 9999,
-},
+  participantesHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    zIndex: 9999,
+  },
   menuBox: {
     position: "absolute",
     right: 20,
@@ -983,6 +977,4 @@ participantesHeader: {
     fontSize: 14,
     color: Colors.rosa,
   },
-
-
 });
