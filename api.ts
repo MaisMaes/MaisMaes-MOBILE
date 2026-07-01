@@ -1,7 +1,7 @@
 import axios from "axios";
 import TokenService from "./service/TokenService";
 
-const BASE_URL = "http://192.168.1.109:8080/";
+const BASE_URL = "https://maismaes-api-hda7beaud2frbvfz.canadacentral-01.azurewebsites.net/";
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -15,7 +15,7 @@ api.interceptors.request.use(async (config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  console.log("Requisição:", config.method?.toUpperCase(), config.url);
+  console.log("Requisição:", config.method?.toUpperCase(), BASE_URL + config.url);
   return config;
 });
 
