@@ -4,6 +4,7 @@ import { DetalheGrupoResponseDTO } from "./model/DetalheGrupoResponseDTO";
 import { EditarGrupoRequest } from "./model/EditarGrupoRequest";
 import { ListarGrupoTematicoDTO } from "./model/ListarGrupoTematicoDTO";
 import { MembroStatusResponseDTO } from "./model/MembroStatusResponseDTO";
+import { PedidoEntradaResponseDTO } from "./model/PedidoEntradaResponseDTO";
 
 class GrupoTematicoService {
   private BASE_URL = "grupo-tematico";
@@ -29,8 +30,32 @@ class GrupoTematicoService {
     return response.data;
   }
 
-  async participar(grupoId: number): Promise<void> {
-    await api.post(`${this.BASE_URL}/${grupoId}/entrar`);
+  async participar(grupoId: number): Promise<string> {
+    const response = await api.post<string>(
+      `${this.BASE_URL}/${grupoId}/entrar`,
+    );
+    return response.data;
+  }
+
+  async listarPedidosEntrada(
+    grupoId: number,
+  ): Promise<PedidoEntradaResponseDTO[]> {
+    const response = await api.get<PedidoEntradaResponseDTO[]>(
+      `${this.BASE_URL}/${grupoId}/pedidos-entrada`,
+    );
+    return response.data;
+  }
+
+  async responderPedidoEntrada(
+    grupoId: number,
+    pedidoId: number,
+    aprovado: boolean,
+  ): Promise<PedidoEntradaResponseDTO> {
+    const response = await api.patch<PedidoEntradaResponseDTO>(
+      `${this.BASE_URL}/${grupoId}/pedidos-entrada/${pedidoId}`,
+      { aprovado },
+    );
+    return response.data;
   }
 
   async listarMeusGrupos(): Promise<ListarGrupoTematicoDTO[]> {
@@ -56,7 +81,7 @@ class GrupoTematicoService {
   }
 
   async favoritar(grupoId: number): Promise<void> {
-  await api.post(`${this.BASE_URL}/${grupoId}/favoritos`);
+    await api.post(`${this.BASE_URL}/${grupoId}/favoritos`);
   }
 
   async removerFavorito(grupoId: number): Promise<void> {
@@ -82,7 +107,23 @@ class GrupoTematicoService {
     await api.post(`${this.BASE_URL}/denunciar/${grupoId}`, {
       descricao,
     });
-  } 
+  }
+
+  async sairDoGrupo(grupoId: number): Promise<void> {
+    await api.delete(`${this.BASE_URL}/${grupoId}/sair`);
+  }
+
+  async banirUsuario(
+    grupoId: number,
+    usuarioId: string,
+    motivo: string,
+  ): Promise<void> {
+    await api.patch(`${this.BASE_URL}/${grupoId}/banir`, { usuarioId, motivo });
+  }
+
+  async removerParticipante(grupoId: number, usuarioId: string): Promise<void> {
+    await api.delete(`${this.BASE_URL}/${grupoId}/participantes/${usuarioId}`);
+  }
 }
 
 export default new GrupoTematicoService();

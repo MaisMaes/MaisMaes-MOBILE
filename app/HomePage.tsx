@@ -4,8 +4,8 @@ import BottomBar from "@/components/BottomBar";
 import CardGrupo from "@/components/CardGrupo";
 import CardNoticia from "@/components/CardNoticia";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
-import InfoCardService, { InfoCard } from "@/service/InfoCardService";
 import GrupoTematicoService from "@/service/GrupoTematicoService";
+import InfoCardService, { InfoCard } from "@/service/InfoCardService";
 import { ListarGrupoTematicoDTO } from "@/service/model/ListarGrupoTematicoDTO";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -21,7 +21,7 @@ export default function ChatsPage() {
   const carregarMeusGrupos = async () => {
     try {
       const data = await GrupoTematicoService.listarMeusGrupos();
-      setMeusGrupos(data);
+      setMeusGrupos(data.filter((g) => !g.banido));
     } catch (e) {
       console.log("Erro ao buscar meus grupos:", e);
     }
@@ -40,33 +40,37 @@ export default function ChatsPage() {
   };
 
   useEffect(() => {
-      carregarMeusGrupos();
-      carregarDestaques();
+    carregarMeusGrupos();
+    carregarDestaques();
   }, []);
 
   return (
     <SafeAreaView style={styles.container}>
+      <AppHeader titulo="Início" logo />
 
-      <AppHeader titulo="Início" logo/>
-
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentInner}
+      >
         <View style={styles.sectionHeader}>
           <AppText style={styles.sectionTitle}>Meus Grupos</AppText>
         </View>
         <View>
-            {meusGrupos.length === 0 ? (
-              <AppText style={styles.emptyText}>Você ainda não participa de nenhum grupo.</AppText>
-            ) : (
-              meusGrupos.map((item) => (
-                <CardGrupo
-                  key={item.id}
-                  id={item.id}
-                  titulo={item.titulo}
-                  descricao={item.descricao}
-                  bairros={item.bairros}
-                />
-              ))
-            )}
+          {meusGrupos.length === 0 ? (
+            <AppText style={styles.emptyText}>
+              Você ainda não participa de nenhum grupo.
+            </AppText>
+          ) : (
+            meusGrupos.map((item) => (
+              <CardGrupo
+                key={item.id}
+                id={item.id}
+                titulo={item.titulo}
+                descricao={item.descricao}
+                bairros={item.bairros}
+              />
+            ))
+          )}
         </View>
 
         <View style={[styles.sectionHeader, { marginTop: 24 }]}>
@@ -74,22 +78,31 @@ export default function ChatsPage() {
         </View>
 
         {carregandoDestaques ? (
-          <ActivityIndicator size="small" color={Colors.roxo} style={{ marginTop: 12 }} />
+          <ActivityIndicator
+            size="small"
+            color={Colors.roxo}
+            style={{ marginTop: 12 }}
+          />
         ) : destaques.length === 0 ? (
-          <AppText style={styles.emptyText}>Nenhum destaque no momento.</AppText>
+          <AppText style={styles.emptyText}>
+            Nenhum destaque no momento.
+          </AppText>
         ) : (
           destaques.map((item) => (
             <CardNoticia
               key={item.id}
               noticia={item}
               onPress={() =>
-                router.push({ pathname: "/DetalheNoticiaPage", params: { id: item.id } })
+                router.push({
+                  pathname: "/DetalheNoticiaPage",
+                  params: { id: item.id },
+                })
               }
             />
           ))
         )}
       </ScrollView>
-      <BottomBar/>
+      <BottomBar />
     </SafeAreaView>
   );
 }
