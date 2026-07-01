@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppHeader from "@/components/AppHeader";
@@ -52,7 +53,7 @@ export default function GrupoPage() {
         ? await GrupoTematicoService.pesquisar(termo)
         : await GrupoTematicoService.listar();
 
-      setGrupos(data);
+      setGrupos(data.filter((g) => !g.banido));
     } catch (e) {
       console.log("Erro ao buscar grupos:", e);
     } finally {
@@ -66,7 +67,7 @@ export default function GrupoPage() {
 
       const data = await GrupoTematicoService.listarMeusGrupos();
 
-      setMeusGrupos(data);
+      setMeusGrupos(data.filter((g) => !g.banido));
     } catch (e) {
       console.log("Erro ao buscar meus grupos:", e);
     } finally {
@@ -80,7 +81,7 @@ export default function GrupoPage() {
 
       const data = await GrupoTematicoService.listarFavoritos();
 
-      setFavoritos(data);
+      setFavoritos(data.filter((g) => !g.banido));
     } catch (e) {
       console.log("Erro ao buscar favoritos:", e);
     } finally {
@@ -93,6 +94,14 @@ export default function GrupoPage() {
     carregarMeusGrupos();
     carregarFavoritos();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarDados(busca);
+      carregarMeusGrupos();
+      carregarFavoritos();
+    }, []),
+  );
 
   const atualizarTudo = async () => {
     await carregarDados(busca);

@@ -2,15 +2,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -94,9 +94,28 @@ export default function DetalheGrupoPage() {
   const [descricaoDenuncia, setDescricaoDenuncia] = useState("");
   const [showMenu, setShowMenu] = useState(false);
 
+  // Banir usuário
+  const [showBanirModal, setShowBanirModal] = useState(false);
+  const [participanteBanir, setParticipanteBanir] = useState<{
+    id: string;
+    nome: string;
+  } | null>(null);
+  const [motivoBanimento, setMotivoBanimento] = useState("");
+
+  // Remover participante
+  const [showRemoverModal, setShowRemoverModal] = useState(false);
+  const [participanteRemover, setParticipanteRemover] = useState<{
+    id: string;
+    nome: string;
+  } | null>(null);
+
   // Pedidos de entrada
-  const [pedidosEntrada, setPedidosEntrada] = useState<PedidoEntradaResponseDTO[]>([]);
-  const [respondendoPedido, setRespondendoPedido] = useState<number | null>(null);
+  const [pedidosEntrada, setPedidosEntrada] = useState<
+    PedidoEntradaResponseDTO[]
+  >([]);
+  const [respondendoPedido, setRespondendoPedido] = useState<number | null>(
+    null,
+  );
 
   const carregarDetalhes = async () => {
     try {
@@ -110,7 +129,9 @@ export default function DetalheGrupoPage() {
         data.usuarioLogadoRole === "MODERADORA";
       if (podeVerPedidos) {
         try {
-          const pedidos = await GrupoTematicoService.listarPedidosEntrada(Number(id));
+          const pedidos = await GrupoTematicoService.listarPedidosEntrada(
+            Number(id),
+          );
           setPedidosEntrada(pedidos);
         } catch {
           // silencia: usuário pode não ter permissão ainda
@@ -273,12 +294,81 @@ export default function DetalheGrupoPage() {
     }
   };
 
+  const handleRemoverParticipante = async () => {
+    if (!participanteRemover) return;
+    try {
+      await GrupoTematicoService.removerParticipante(
+        Number(id),
+        participanteRemover.id,
+      );
+      PopupService.success(
+        `${participanteRemover.nome} foi removido do grupo.`,
+      );
+      setShowRemoverModal(false);
+      setParticipanteRemover(null);
+      carregarDetalhes();
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.error ?? "Erro ao remover participante.";
+      PopupService.error(message);
+    }
+  };
+
+  const handleBanir = async () => {
+    if (!participanteBanir) return;
+    if (!motivoBanimento.trim()) {
+      PopupService.info("Informe o motivo do banimento.");
+      return;
+    }
+    try {
+      await GrupoTematicoService.banirUsuario(
+        Number(id),
+        participanteBanir.id,
+        motivoBanimento.trim(),
+      );
+      PopupService.success(`${participanteBanir.nome} foi banido do grupo.`);
+      setShowBanirModal(false);
+      setMotivoBanimento("");
+      setParticipanteBanir(null);
+      carregarDetalhes();
+    } catch (error: any) {
+      const message = error?.response?.data?.error ?? "Erro ao banir usuário.";
+      PopupService.error(message);
+    }
+  };
+
+  const handleSairDoGrupo = () => {
+    Alert.alert("Sair do grupo", "Tem certeza que deseja sair deste grupo?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Sair",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await GrupoTematicoService.sairDoGrupo(Number(id));
+            PopupService.success("Você saiu do grupo.");
+            router.back();
+          } catch (error: any) {
+            const message =
+              error?.response?.data?.error ?? "Erro ao sair do grupo.";
+            PopupService.error(message);
+          }
+        },
+      },
+    ]);
+  };
+
   const handleResponderPedido = async (pedidoId: number, aprovado: boolean) => {
     setRespondendoPedido(pedidoId);
     try {
-      await GrupoTematicoService.responderPedidoEntrada(Number(id), pedidoId, aprovado);
+      await GrupoTematicoService.responderPedidoEntrada(
+        Number(id),
+        pedidoId,
+        aprovado,
+      );
       PopupService.success(aprovado ? "Pedido aprovado!" : "Pedido rejeitado.");
       setPedidosEntrada((prev) => prev.filter((p) => p.pedidoId !== pedidoId));
+      if (aprovado) carregarDetalhes();
     } catch (error: any) {
       const message =
         error?.response?.data?.error ?? "Erro ao responder pedido.";
@@ -350,7 +440,25 @@ export default function DetalheGrupoPage() {
         >
           {!editando ? (
             <>
-              <AppText style={styles.titulo}>{grupo.titulo}</AppText>
+              <View style={styles.tituloRow}>
+                <AppText style={[styles.titulo, { flex: 1 }]}>
+                  {grupo.titulo}
+                </AppText>
+                {grupo.usuarioLogadoEParticipante &&
+                  grupo.usuarioLogadoRole !== "CRIADORA" && (
+                    <TouchableOpacity
+                      style={styles.btnSairGrupo}
+                      onPress={handleSairDoGrupo}
+                    >
+                      <Ionicons
+                        name="exit-outline"
+                        size={16}
+                        color={Colors.branco}
+                      />
+                      <AppText style={styles.btnSairGrupoText}>Sair</AppText>
+                    </TouchableOpacity>
+                  )}
+              </View>
               <AppText style={styles.descricao}>{grupo.descricao}</AppText>
 
               <View style={styles.pillsRow}>
@@ -371,7 +479,11 @@ export default function DetalheGrupoPage() {
               {/* Banner: aguardando aprovação */}
               {grupo.usuarioLogadoAguardandoAprovacao && (
                 <View style={styles.bannerPendente}>
-                  <Ionicons name="time-outline" size={18} color={Colors.azulEscuro} />
+                  <Ionicons
+                    name="time-outline"
+                    size={18}
+                    color={Colors.azulEscuro}
+                  />
                   <AppText style={styles.bannerPendenteText}>
                     Seu pedido de entrada está aguardando aprovação da criadora.
                   </AppText>
@@ -395,33 +507,34 @@ export default function DetalheGrupoPage() {
                   {grupo.numeroParticipantes})
                 </AppText>
 
-                {grupo.usuarioLogadoEParticipante && (
-                  <View style={{ position: "relative" }}>
-                    <TouchableOpacity onPress={() => setShowMenu(!showMenu)}>
-                      <Ionicons
-                        name="ellipsis-vertical"
-                        size={22}
-                        color={Colors.grafite}
-                      />
-                    </TouchableOpacity>
+                {grupo.usuarioLogadoEParticipante &&
+                  grupo.usuarioLogadoRole !== "CRIADORA" && (
+                    <View style={{ position: "relative" }}>
+                      <TouchableOpacity onPress={() => setShowMenu(!showMenu)}>
+                        <Ionicons
+                          name="ellipsis-vertical"
+                          size={22}
+                          color={Colors.grafite}
+                        />
+                      </TouchableOpacity>
 
-                    {showMenu && (
-                      <View style={styles.dropdownMenu}>
-                        <TouchableOpacity
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            setShowMenu(false);
-                            setShowDenunciaModal(true);
-                          }}
-                        >
-                          <AppText style={styles.dropdownText}>
-                            Denunciar grupo
-                          </AppText>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                  </View>
-                )}
+                      {showMenu && (
+                        <View style={styles.dropdownMenu}>
+                          <TouchableOpacity
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              setShowMenu(false);
+                              setShowDenunciaModal(true);
+                            }}
+                          >
+                            <AppText style={styles.dropdownText}>
+                              Denunciar grupo
+                            </AppText>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  )}
               </View>
               <Modal
                 visible={showDenunciaModal}
@@ -479,7 +592,7 @@ export default function DetalheGrupoPage() {
                 <View>
                   {grupo.participantes.map((p, i) => (
                     <View
-                      key={p.id ?? `part-${i}`}
+                      key={p.usuarioId ?? `part-${i}`}
                       style={styles.participanteItem}
                     >
                       <Ionicons
@@ -487,13 +600,133 @@ export default function DetalheGrupoPage() {
                         size={28}
                         color={Colors.roxo}
                       />
-                      <AppText style={styles.participanteNome}>
+                      <AppText style={[styles.participanteNome, { flex: 1 }]}>
                         {p.nome}
                       </AppText>
+                      {podeEditar && p.role !== "CRIADORA" && (
+                        <TouchableOpacity
+                          style={styles.btnRemover}
+                          onPress={() => {
+                            setParticipanteRemover({
+                              id: p.usuarioId,
+                              nome: p.nome,
+                            });
+                            setShowRemoverModal(true);
+                          }}
+                        >
+                          <AppText style={styles.btnRemoverText}>
+                            Remover
+                          </AppText>
+                        </TouchableOpacity>
+                      )}
+                      {podeEditar && p.role !== "CRIADORA" && (
+                        <TouchableOpacity
+                          style={styles.btnBanir}
+                          onPress={() => {
+                            setParticipanteBanir({
+                              id: p.usuarioId,
+                              nome: p.nome,
+                            });
+                            setShowBanirModal(true);
+                          }}
+                        >
+                          <AppText style={styles.btnBanirText}>Banir</AppText>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   ))}
                 </View>
               )}
+
+              {/* Modal remover participante */}
+              <Modal
+                visible={showRemoverModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowRemoverModal(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalBox}>
+                    <AppText style={styles.sectionTitle}>
+                      Remover {participanteRemover?.nome}
+                    </AppText>
+                    <AppText style={{ marginBottom: 10 }}>
+                      Deseja remover {participanteRemover?.nome} do grupo?
+                    </AppText>
+                    <View style={styles.modalActions}>
+                      <TouchableOpacity
+                        style={styles.btnCancelar}
+                        onPress={() => {
+                          setShowRemoverModal(false);
+                          setParticipanteRemover(null);
+                        }}
+                      >
+                        <AppText style={styles.btnCancelarText}>
+                          Cancelar
+                        </AppText>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.btnSalvar,
+                          { backgroundColor: "#d9534f" },
+                        ]}
+                        onPress={handleRemoverParticipante}
+                      >
+                        <AppText style={styles.btnSalvarText}>Remover</AppText>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </Modal>
+
+              {/* Modal banir usuário */}
+              <Modal
+                visible={showBanirModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowBanirModal(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalBox}>
+                    <AppText style={styles.sectionTitle}>
+                      Banir {participanteBanir?.nome}
+                    </AppText>
+                    <AppText style={{ marginBottom: 10 }}>
+                      Informe o motivo do banimento:
+                    </AppText>
+                    <TextInput
+                      value={motivoBanimento}
+                      onChangeText={setMotivoBanimento}
+                      multiline
+                      placeholder="Motivo do banimento..."
+                      style={[styles.input, styles.textArea]}
+                    />
+                    <View style={styles.modalActions}>
+                      <TouchableOpacity
+                        style={styles.btnCancelar}
+                        onPress={() => {
+                          setShowBanirModal(false);
+                          setMotivoBanimento("");
+                          setParticipanteBanir(null);
+                        }}
+                      >
+                        <AppText style={styles.btnCancelarText}>
+                          Cancelar
+                        </AppText>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.btnSalvar,
+                          { backgroundColor: "#d9534f" },
+                        ]}
+                        onPress={handleBanir}
+                      >
+                        <AppText style={styles.btnSalvarText}>Banir</AppText>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </Modal>
 
               {/* Seção de pedidos de entrada pendentes (criadora/moderadora) */}
               {(grupo.usuarioLogadoRole === "CRIADORA" ||
@@ -524,9 +757,16 @@ export default function DetalheGrupoPage() {
                             }
                           >
                             {respondendoPedido === pedido.pedidoId ? (
-                              <ActivityIndicator size="small" color={Colors.rosa} />
+                              <ActivityIndicator
+                                size="small"
+                                color={Colors.rosa}
+                              />
                             ) : (
-                              <Ionicons name="close" size={18} color={Colors.rosa} />
+                              <Ionicons
+                                name="close"
+                                size={18}
+                                color={Colors.rosa}
+                              />
                             )}
                           </TouchableOpacity>
                           <TouchableOpacity
@@ -537,9 +777,16 @@ export default function DetalheGrupoPage() {
                             }
                           >
                             {respondendoPedido === pedido.pedidoId ? (
-                              <ActivityIndicator size="small" color={Colors.branco} />
+                              <ActivityIndicator
+                                size="small"
+                                color={Colors.branco}
+                              />
                             ) : (
-                              <Ionicons name="checkmark" size={18} color={Colors.branco} />
+                              <Ionicons
+                                name="checkmark"
+                                size={18}
+                                color={Colors.branco}
+                              />
                             )}
                           </TouchableOpacity>
                         </View>
@@ -775,11 +1022,16 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
+  tituloRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+    gap: 10,
+  },
   titulo: {
     fontFamily: Fonts.bold,
     fontSize: 26,
     color: Colors.grafite,
-    marginBottom: 8,
   },
   descricao: {
     fontFamily: Fonts.regular,
@@ -841,6 +1093,32 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: GlobalFontSize.text,
     color: Colors.grafite,
+  },
+  btnBanir: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: "#d9534f",
+    borderRadius: 6,
+    marginLeft: 6,
+  },
+  btnBanirText: {
+    color: Colors.branco,
+    fontSize: 12,
+    fontFamily: Fonts.semiBold,
+  },
+  btnRemover: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: Colors.branco,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: "#d9534f",
+    marginLeft: 6,
+  },
+  btnRemoverText: {
+    color: "#d9534f",
+    fontSize: 12,
+    fontFamily: Fonts.semiBold,
   },
   emptyText: {
     fontFamily: Fonts.regular,
@@ -975,27 +1253,27 @@ const styles = StyleSheet.create({
   },
   btnCancelar: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 15,
+    paddingVertical: 9,
+    borderRadius: 10,
     alignItems: "center",
     borderWidth: 1.5,
     borderColor: Colors.cinzaClaro,
   },
   btnCancelarText: {
     fontFamily: Fonts.semiBold,
-    fontSize: GlobalFontSize.subtitle,
+    fontSize: GlobalFontSize.text,
     color: Colors.grafite,
   },
   btnSalvar: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 15,
+    paddingVertical: 9,
+    borderRadius: 10,
     alignItems: "center",
     backgroundColor: Colors.roxo,
   },
   btnSalvarText: {
     fontFamily: Fonts.semiBold,
-    fontSize: GlobalFontSize.subtitle,
+    fontSize: GlobalFontSize.text,
     color: Colors.branco,
   },
   participantesHeader: {
@@ -1003,6 +1281,21 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     zIndex: 9999,
+  },
+  btnSairGrupo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#d9534f",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  btnSairGrupoText: {
+    color: Colors.branco,
+    fontSize: 13,
+    fontFamily: Fonts.semiBold,
   },
   menuBox: {
     position: "absolute",
@@ -1041,6 +1334,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 15,
+    gap: 20,
   },
   dropdownMenu: {
     position: "absolute",

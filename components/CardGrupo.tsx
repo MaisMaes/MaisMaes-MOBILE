@@ -27,7 +27,7 @@ export default function CardGrupo({
   isFavorito = false,
   onPress,
   onParticipar,
-  onFavoritoAlterado
+  onFavoritoAlterado,
 }: CardGrupoProps) {
   const router = useRouter();
   const [verificandoChat, setVerificandoChat] = useState(false);
@@ -94,20 +94,20 @@ export default function CardGrupo({
   };
 
   const handleFavorito = async () => {
-  try {
-    if (isFavorito) {
-      await GrupoTematicoService.removerFavorito(id);
-      PopupService.success("Grupo removido dos favoritos");
-    } else {
-      await GrupoTematicoService.favoritar(id);
-      PopupService.success("Grupo adicionado aos favoritos");
-    }
+    try {
+      if (isFavorito) {
+        await GrupoTematicoService.removerFavorito(id);
+        PopupService.success("Grupo removido dos favoritos");
+      } else {
+        await GrupoTematicoService.favoritar(id);
+        PopupService.success("Grupo adicionado aos favoritos");
+      }
 
-    onFavoritoAlterado?.();
-  } catch (error) {
-    PopupService.error("Erro ao atualizar favorito");
-  }
-};
+      onFavoritoAlterado?.();
+    } catch (error) {
+      PopupService.error("Erro ao atualizar favorito");
+    }
+  };
 
   return (
     <TouchableOpacity

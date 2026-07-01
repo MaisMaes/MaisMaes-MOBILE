@@ -21,7 +21,7 @@ export default function ChatsPage() {
   const carregarMeusGrupos = async () => {
     try {
       const data = await GrupoTematicoService.listarMeusGrupos();
-      setMeusGrupos(data);
+      setMeusGrupos(data.filter((g) => !g.banido));
     } catch (e) {
       console.log("Erro ao buscar meus grupos:", e);
     }

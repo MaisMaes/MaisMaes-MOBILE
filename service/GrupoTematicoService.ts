@@ -31,11 +31,15 @@ class GrupoTematicoService {
   }
 
   async participar(grupoId: number): Promise<string> {
-    const response = await api.post<string>(`${this.BASE_URL}/${grupoId}/entrar`);
+    const response = await api.post<string>(
+      `${this.BASE_URL}/${grupoId}/entrar`,
+    );
     return response.data;
   }
 
-  async listarPedidosEntrada(grupoId: number): Promise<PedidoEntradaResponseDTO[]> {
+  async listarPedidosEntrada(
+    grupoId: number,
+  ): Promise<PedidoEntradaResponseDTO[]> {
     const response = await api.get<PedidoEntradaResponseDTO[]>(
       `${this.BASE_URL}/${grupoId}/pedidos-entrada`,
     );
@@ -77,7 +81,7 @@ class GrupoTematicoService {
   }
 
   async favoritar(grupoId: number): Promise<void> {
-  await api.post(`${this.BASE_URL}/${grupoId}/favoritos`);
+    await api.post(`${this.BASE_URL}/${grupoId}/favoritos`);
   }
 
   async removerFavorito(grupoId: number): Promise<void> {
@@ -103,7 +107,23 @@ class GrupoTematicoService {
     await api.post(`${this.BASE_URL}/denunciar/${grupoId}`, {
       descricao,
     });
-  } 
+  }
+
+  async sairDoGrupo(grupoId: number): Promise<void> {
+    await api.delete(`${this.BASE_URL}/${grupoId}/sair`);
+  }
+
+  async banirUsuario(
+    grupoId: number,
+    usuarioId: string,
+    motivo: string,
+  ): Promise<void> {
+    await api.patch(`${this.BASE_URL}/${grupoId}/banir`, { usuarioId, motivo });
+  }
+
+  async removerParticipante(grupoId: number, usuarioId: string): Promise<void> {
+    await api.delete(`${this.BASE_URL}/${grupoId}/participantes/${usuarioId}`);
+  }
 }
 
 export default new GrupoTematicoService();
