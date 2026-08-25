@@ -9,6 +9,7 @@ import { StyleSheet, View } from "react-native";
 import AppButton from "../AppButton";
 import Input from "../input";
 import { AuthResponse, PerfilStatus } from "@/service/model/AuthResponse";
+import TokenService from "@/service/TokenService";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -41,6 +42,7 @@ export default function Login() {
     try {
       const response:AuthResponse = await AuthService.login(loginData);
       PopupService.success("Login realizado com sucesso!");
+      TokenService.saveToken(response.token);
       setTimeout(() => navigate.replace("/HomePage"), 2000);
     } catch (error:any) {
       const response:AuthResponse = error.response.data;

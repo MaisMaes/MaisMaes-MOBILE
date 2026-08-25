@@ -66,7 +66,7 @@ export default function Cadastro() {
     }
     try {
       await UsuarioService.cadastrar(cadastrarData);
-      PopupService.success("Cadastro realizado com sucesso!");
+      PopupService.success("Cadastro realizado com sucesso! Uma mensagem de ativação foi enviada para o seu email.");
       setTimeout(() => router.replace("/StartPage"), 2000);
     } catch (error: any) {
       const message =

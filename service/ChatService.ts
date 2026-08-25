@@ -9,7 +9,7 @@ import { HistoricoMensagensResponse } from "./model/HistoricoMensagensResponse";
 type MessageHandler = (message: ChatMessage) => void;
 
 class ChatService {
-  private readonly CHAT_URL = `${BASE_URL}/chat`;
+  private readonly CHAT_URL = BASE_URL + "chat";
   private client: any = null;
   private subscription: any = null;
 
