@@ -60,34 +60,31 @@ export default function CardNoticia({
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: "row",
+    flexDirection: "column", 
     backgroundColor: Colors.branco,
     borderWidth: 1.5,
     borderColor: Colors.grafite,
     borderRadius: 20,
     padding: 12,
-    marginBottom: 12,
-    alignItems: "center",
-
+    marginBottom: 16,
     elevation: 2,
     shadowColor: Colors.grafite,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
 
   iconContainer: {
-    width: 65,
-    height: 65,
+    width: "100%",
+    height: 60, 
     backgroundColor: Colors.azulClaro,
     borderRadius: 18,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1.5,
     borderColor: Colors.grafite,
+    marginTop: 6,
   },
 
   infoContainer: {
@@ -97,6 +94,7 @@ const styles = StyleSheet.create({
   },
 
   titulo: {
+    marginTop: 20,
     fontFamily: Fonts.semiBold,
     fontSize: GlobalFontSize.subtitle,
     color: Colors.grafite,
@@ -106,7 +104,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: 11,
     color: Colors.cinzaClaro,
-    marginTop: 2,
+    textAlign: "right",
   },
 
   descricao: {

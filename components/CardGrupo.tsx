@@ -27,7 +27,7 @@ export default function CardGrupo({
   isFavorito = false,
   onPress,
   onParticipar,
-  onFavoritoAlterado
+  onFavoritoAlterado,
 }: CardGrupoProps) {
   const router = useRouter();
   const [verificandoChat, setVerificandoChat] = useState(false);
@@ -77,9 +77,14 @@ export default function CardGrupo({
 
   const onAddPress = async () => {
     try {
-      await GrupoTematicoService.participar(id);
-      PopupService.success("Você entrou no grupo com sucesso!");
-      onParticipar?.();
+      const mensagem = await GrupoTematicoService.participar(id);
+      const isPendente = mensagem?.toLowerCase().includes("pedido");
+      if (isPendente) {
+        PopupService.info(mensagem);
+      } else {
+        PopupService.success(mensagem ?? "Você entrou no grupo com sucesso!");
+        onParticipar?.();
+      }
     } catch (error: any) {
       const message =
         error?.response?.data?.error ??
@@ -89,20 +94,20 @@ export default function CardGrupo({
   };
 
   const handleFavorito = async () => {
-  try {
-    if (isFavorito) {
-      await GrupoTematicoService.removerFavorito(id);
-      PopupService.success("Grupo removido dos favoritos");
-    } else {
-      await GrupoTematicoService.favoritar(id);
-      PopupService.success("Grupo adicionado aos favoritos");
-    }
+    try {
+      if (isFavorito) {
+        await GrupoTematicoService.removerFavorito(id);
+        PopupService.success("Grupo removido dos favoritos");
+      } else {
+        await GrupoTematicoService.favoritar(id);
+        PopupService.success("Grupo adicionado aos favoritos");
+      }
 
-    onFavoritoAlterado?.();
-  } catch (error) {
-    PopupService.error("Erro ao atualizar favorito");
-  }
-};
+      onFavoritoAlterado?.();
+    } catch (error) {
+      PopupService.error("Erro ao atualizar favorito");
+    }
+  };
 
   return (
     <TouchableOpacity

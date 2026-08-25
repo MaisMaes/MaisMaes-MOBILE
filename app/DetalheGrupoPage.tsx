@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   ScrollView,
   StyleSheet,
   Switch,
@@ -18,6 +19,7 @@ import ChatBubbleIcon from "@/components/ChatBubbleIcon";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
 import GrupoTematicoService from "@/service/GrupoTematicoService";
 import { DetalheGrupoResponseDTO } from "@/service/model/DetalheGrupoResponseDTO";
+import { PedidoEntradaResponseDTO } from "@/service/model/PedidoEntradaResponseDTO";
 import PopupService from "@/utils/PopupService";
 
 const CATEGORIAS = [
@@ -87,13 +89,54 @@ export default function DetalheGrupoPage() {
   const [verificandoChat, setVerificandoChat] = useState(false);
   const [eParticipante, setEParticipante] = useState<boolean | null>(null);
 
+  //Denunciar grupo
+  const [showDenunciaModal, setShowDenunciaModal] = useState(false);
+  const [descricaoDenuncia, setDescricaoDenuncia] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
+
+  // Banir usuário
+  const [showBanirModal, setShowBanirModal] = useState(false);
+  const [participanteBanir, setParticipanteBanir] = useState<{
+    id: string;
+    nome: string;
+  } | null>(null);
+  const [motivoBanimento, setMotivoBanimento] = useState("");
+
+  // Remover participante
+  const [showRemoverModal, setShowRemoverModal] = useState(false);
+  const [participanteRemover, setParticipanteRemover] = useState<{
+    id: string;
+    nome: string;
+  } | null>(null);
+
+  // Pedidos de entrada
+  const [pedidosEntrada, setPedidosEntrada] = useState<
+    PedidoEntradaResponseDTO[]
+  >([]);
+  const [respondendoPedido, setRespondendoPedido] = useState<number | null>(
+    null,
+  );
+
   const carregarDetalhes = async () => {
     try {
       setCarregando(true);
       const data = await GrupoTematicoService.buscarDetalhes(Number(id));
       setGrupo(data);
-      // usa o campo já disponível no DTO para evitar chamada extra
       setEParticipante(data.usuarioLogadoEParticipante);
+
+      const podeVerPedidos =
+        data.usuarioLogadoRole === "CRIADORA" ||
+        data.usuarioLogadoRole === "MODERADORA";
+      if (podeVerPedidos) {
+        try {
+          const pedidos = await GrupoTematicoService.listarPedidosEntrada(
+            Number(id),
+          );
+          setPedidosEntrada(pedidos);
+        } catch {
+          // silencia: usuário pode não ter permissão ainda
+        }
+      }
     } catch {
       PopupService.error("Erro ao carregar detalhes do grupo.");
       router.back();
@@ -230,6 +273,111 @@ export default function DetalheGrupoPage() {
     );
   };
 
+  const handleDenunciar = async () => {
+    if (!descricaoDenuncia.trim()) {
+      PopupService.info("Informe o motivo da denúncia.");
+      return;
+    }
+
+    try {
+      await GrupoTematicoService.denunciar(
+        Number(id),
+        descricaoDenuncia.trim(),
+      );
+      PopupService.success("Denúncia enviada com sucesso!");
+      setDescricaoDenuncia("");
+      setShowDenunciaModal(false);
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.error ?? "Erro ao enviar denúncia.";
+      PopupService.error(message);
+    }
+  };
+
+  const handleRemoverParticipante = async () => {
+    if (!participanteRemover) return;
+    try {
+      await GrupoTematicoService.removerParticipante(
+        Number(id),
+        participanteRemover.id,
+      );
+      PopupService.success(
+        `${participanteRemover.nome} foi removido do grupo.`,
+      );
+      setShowRemoverModal(false);
+      setParticipanteRemover(null);
+      carregarDetalhes();
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.error ?? "Erro ao remover participante.";
+      PopupService.error(message);
+    }
+  };
+
+  const handleBanir = async () => {
+    if (!participanteBanir) return;
+    if (!motivoBanimento.trim()) {
+      PopupService.info("Informe o motivo do banimento.");
+      return;
+    }
+    try {
+      await GrupoTematicoService.banirUsuario(
+        Number(id),
+        participanteBanir.id,
+        motivoBanimento.trim(),
+      );
+      PopupService.success(`${participanteBanir.nome} foi banido do grupo.`);
+      setShowBanirModal(false);
+      setMotivoBanimento("");
+      setParticipanteBanir(null);
+      carregarDetalhes();
+    } catch (error: any) {
+      const message = error?.response?.data?.error ?? "Erro ao banir usuário.";
+      PopupService.error(message);
+    }
+  };
+
+  const handleSairDoGrupo = () => {
+    Alert.alert("Sair do grupo", "Tem certeza que deseja sair deste grupo?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Sair",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await GrupoTematicoService.sairDoGrupo(Number(id));
+            PopupService.success("Você saiu do grupo.");
+            router.back();
+          } catch (error: any) {
+            const message =
+              error?.response?.data?.error ?? "Erro ao sair do grupo.";
+            PopupService.error(message);
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleResponderPedido = async (pedidoId: number, aprovado: boolean) => {
+    setRespondendoPedido(pedidoId);
+    try {
+      await GrupoTematicoService.responderPedidoEntrada(
+        Number(id),
+        pedidoId,
+        aprovado,
+      );
+      PopupService.success(aprovado ? "Pedido aprovado!" : "Pedido rejeitado.");
+      setPedidosEntrada((prev) => prev.filter((p) => p.pedidoId !== pedidoId));
+      if (aprovado) carregarDetalhes();
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.error ?? "Erro ao responder pedido.";
+      PopupService.error(message);
+    } finally {
+      setRespondendoPedido(null);
+    }
+  };
+
   if (carregando) {
     return (
       <SafeAreaView style={styles.container}>
@@ -292,7 +440,25 @@ export default function DetalheGrupoPage() {
         >
           {!editando ? (
             <>
-              <AppText style={styles.titulo}>{grupo.titulo}</AppText>
+              <View style={styles.tituloRow}>
+                <AppText style={[styles.titulo, { flex: 1 }]}>
+                  {grupo.titulo}
+                </AppText>
+                {grupo.usuarioLogadoEParticipante &&
+                  grupo.usuarioLogadoRole !== "CRIADORA" && (
+                    <TouchableOpacity
+                      style={styles.btnSairGrupo}
+                      onPress={handleSairDoGrupo}
+                    >
+                      <Ionicons
+                        name="exit-outline"
+                        size={16}
+                        color={Colors.branco}
+                      />
+                      <AppText style={styles.btnSairGrupoText}>Sair</AppText>
+                    </TouchableOpacity>
+                  )}
+              </View>
               <AppText style={styles.descricao}>{grupo.descricao}</AppText>
 
               <View style={styles.pillsRow}>
@@ -310,6 +476,20 @@ export default function DetalheGrupoPage() {
                 )}
               </View>
 
+              {/* Banner: aguardando aprovação */}
+              {grupo.usuarioLogadoAguardandoAprovacao && (
+                <View style={styles.bannerPendente}>
+                  <Ionicons
+                    name="time-outline"
+                    size={18}
+                    color={Colors.azulEscuro}
+                  />
+                  <AppText style={styles.bannerPendenteText}>
+                    Seu pedido de entrada está aguardando aprovação da criadora.
+                  </AppText>
+                </View>
+              )}
+
               <AppText style={styles.sectionTitle}>Bairros</AppText>
               <View style={styles.tagsContainer}>
                 {grupo.bairros.map((b, i) => (
@@ -321,10 +501,89 @@ export default function DetalheGrupoPage() {
                 ))}
               </View>
 
-              <AppText style={styles.sectionTitle}>
-                Participantes ({grupo.participantes.length}/
-                {grupo.numeroParticipantes})
-              </AppText>
+              <View style={styles.participantesHeader}>
+                <AppText style={styles.sectionTitle}>
+                  Participantes ({grupo.participantes.length}/
+                  {grupo.numeroParticipantes})
+                </AppText>
+
+                {grupo.usuarioLogadoEParticipante &&
+                  grupo.usuarioLogadoRole !== "CRIADORA" && (
+                    <View style={{ position: "relative" }}>
+                      <TouchableOpacity onPress={() => setShowMenu(!showMenu)}>
+                        <Ionicons
+                          name="ellipsis-vertical"
+                          size={22}
+                          color={Colors.grafite}
+                        />
+                      </TouchableOpacity>
+
+                      {showMenu && (
+                        <View style={styles.dropdownMenu}>
+                          <TouchableOpacity
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              setShowMenu(false);
+                              setShowDenunciaModal(true);
+                            }}
+                          >
+                            <AppText style={styles.dropdownText}>
+                              Denunciar grupo
+                            </AppText>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  )}
+              </View>
+              <Modal
+                visible={showDenunciaModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowDenunciaModal(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalBox}>
+                    <AppText style={styles.sectionTitle}>
+                      Denunciar grupo
+                    </AppText>
+
+                    <AppText style={{ marginBottom: 10 }}>
+                      Informe o motivo da denúncia:
+                    </AppText>
+
+                    <TextInput
+                      value={descricaoDenuncia}
+                      onChangeText={setDescricaoDenuncia}
+                      multiline
+                      placeholder="Descreva o motivo da denúncia..."
+                      style={[styles.input, styles.textArea]}
+                    />
+
+                    <View style={styles.modalActions}>
+                      <TouchableOpacity
+                        style={styles.btnCancelar}
+                        onPress={() => {
+                          setDescricaoDenuncia("");
+                          setShowDenunciaModal(false);
+                        }}
+                      >
+                        <AppText style={styles.btnCancelarText}>
+                          Cancelar
+                        </AppText>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.btnSalvar}
+                        onPress={handleDenunciar}
+                      >
+                        <AppText style={styles.btnSalvarText}>Enviar</AppText>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </Modal>
+
               {grupo.participantes.length === 0 ? (
                 <AppText style={styles.emptyText}>
                   Nenhum participante ainda.
@@ -333,7 +592,7 @@ export default function DetalheGrupoPage() {
                 <View>
                   {grupo.participantes.map((p, i) => (
                     <View
-                      key={p.id ?? `part-${i}`}
+                      key={p.usuarioId ?? `part-${i}`}
                       style={styles.participanteItem}
                     >
                       <Ionicons
@@ -341,13 +600,200 @@ export default function DetalheGrupoPage() {
                         size={28}
                         color={Colors.roxo}
                       />
-                      <AppText style={styles.participanteNome}>
+                      <AppText style={[styles.participanteNome, { flex: 1 }]}>
                         {p.nome}
                       </AppText>
+                      {podeEditar && p.role !== "CRIADORA" && (
+                        <TouchableOpacity
+                          style={styles.btnRemover}
+                          onPress={() => {
+                            setParticipanteRemover({
+                              id: p.usuarioId,
+                              nome: p.nome,
+                            });
+                            setShowRemoverModal(true);
+                          }}
+                        >
+                          <AppText style={styles.btnRemoverText}>
+                            Remover
+                          </AppText>
+                        </TouchableOpacity>
+                      )}
+                      {podeEditar && p.role !== "CRIADORA" && (
+                        <TouchableOpacity
+                          style={styles.btnBanir}
+                          onPress={() => {
+                            setParticipanteBanir({
+                              id: p.usuarioId,
+                              nome: p.nome,
+                            });
+                            setShowBanirModal(true);
+                          }}
+                        >
+                          <AppText style={styles.btnBanirText}>Banir</AppText>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   ))}
                 </View>
               )}
+
+              {/* Modal remover participante */}
+              <Modal
+                visible={showRemoverModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowRemoverModal(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalBox}>
+                    <AppText style={styles.sectionTitle}>
+                      Remover {participanteRemover?.nome}
+                    </AppText>
+                    <AppText style={{ marginBottom: 10 }}>
+                      Deseja remover {participanteRemover?.nome} do grupo?
+                    </AppText>
+                    <View style={styles.modalActions}>
+                      <TouchableOpacity
+                        style={styles.btnCancelar}
+                        onPress={() => {
+                          setShowRemoverModal(false);
+                          setParticipanteRemover(null);
+                        }}
+                      >
+                        <AppText style={styles.btnCancelarText}>
+                          Cancelar
+                        </AppText>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.btnSalvar,
+                          { backgroundColor: "#d9534f" },
+                        ]}
+                        onPress={handleRemoverParticipante}
+                      >
+                        <AppText style={styles.btnSalvarText}>Remover</AppText>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </Modal>
+
+              {/* Modal banir usuário */}
+              <Modal
+                visible={showBanirModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowBanirModal(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalBox}>
+                    <AppText style={styles.sectionTitle}>
+                      Banir {participanteBanir?.nome}
+                    </AppText>
+                    <AppText style={{ marginBottom: 10 }}>
+                      Informe o motivo do banimento:
+                    </AppText>
+                    <TextInput
+                      value={motivoBanimento}
+                      onChangeText={setMotivoBanimento}
+                      multiline
+                      placeholder="Motivo do banimento..."
+                      style={[styles.input, styles.textArea]}
+                    />
+                    <View style={styles.modalActions}>
+                      <TouchableOpacity
+                        style={styles.btnCancelar}
+                        onPress={() => {
+                          setShowBanirModal(false);
+                          setMotivoBanimento("");
+                          setParticipanteBanir(null);
+                        }}
+                      >
+                        <AppText style={styles.btnCancelarText}>
+                          Cancelar
+                        </AppText>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.btnSalvar,
+                          { backgroundColor: "#d9534f" },
+                        ]}
+                        onPress={handleBanir}
+                      >
+                        <AppText style={styles.btnSalvarText}>Banir</AppText>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </Modal>
+
+              {/* Seção de pedidos de entrada pendentes (criadora/moderadora) */}
+              {(grupo.usuarioLogadoRole === "CRIADORA" ||
+                grupo.usuarioLogadoRole === "MODERADORA") &&
+                pedidosEntrada.length > 0 && (
+                  <>
+                    <AppText style={[styles.sectionTitle, { marginTop: 20 }]}>
+                      Pedidos de entrada ({pedidosEntrada.length})
+                    </AppText>
+                    {pedidosEntrada.map((pedido) => (
+                      <View key={pedido.pedidoId} style={styles.pedidoItem}>
+                        <View style={styles.pedidoInfo}>
+                          <Ionicons
+                            name="person-add-outline"
+                            size={24}
+                            color={Colors.roxo}
+                          />
+                          <AppText style={styles.pedidoNome}>
+                            {pedido.nomeUsuario}
+                          </AppText>
+                        </View>
+                        <View style={styles.pedidoAcoes}>
+                          <TouchableOpacity
+                            style={styles.btnRejeitar}
+                            disabled={respondendoPedido === pedido.pedidoId}
+                            onPress={() =>
+                              handleResponderPedido(pedido.pedidoId, false)
+                            }
+                          >
+                            {respondendoPedido === pedido.pedidoId ? (
+                              <ActivityIndicator
+                                size="small"
+                                color={Colors.rosa}
+                              />
+                            ) : (
+                              <Ionicons
+                                name="close"
+                                size={18}
+                                color={Colors.rosa}
+                              />
+                            )}
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.btnAprovar}
+                            disabled={respondendoPedido === pedido.pedidoId}
+                            onPress={() =>
+                              handleResponderPedido(pedido.pedidoId, true)
+                            }
+                          >
+                            {respondendoPedido === pedido.pedidoId ? (
+                              <ActivityIndicator
+                                size="small"
+                                color={Colors.branco}
+                              />
+                            ) : (
+                              <Ionicons
+                                name="checkmark"
+                                size={18}
+                                color={Colors.branco}
+                              />
+                            )}
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ))}
+                  </>
+                )}
             </>
           ) : (
             // ── MODO EDIÇÃO ────────────────────────────────────────────
@@ -576,11 +1022,16 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
+  tituloRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+    gap: 10,
+  },
   titulo: {
     fontFamily: Fonts.bold,
     fontSize: 26,
     color: Colors.grafite,
-    marginBottom: 8,
   },
   descricao: {
     fontFamily: Fonts.regular,
@@ -642,6 +1093,32 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: GlobalFontSize.text,
     color: Colors.grafite,
+  },
+  btnBanir: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: "#d9534f",
+    borderRadius: 6,
+    marginLeft: 6,
+  },
+  btnBanirText: {
+    color: Colors.branco,
+    fontSize: 12,
+    fontFamily: Fonts.semiBold,
+  },
+  btnRemover: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: Colors.branco,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: "#d9534f",
+    marginLeft: 6,
+  },
+  btnRemoverText: {
+    color: "#d9534f",
+    fontSize: 12,
+    fontFamily: Fonts.semiBold,
   },
   emptyText: {
     fontFamily: Fonts.regular,
@@ -776,27 +1253,174 @@ const styles = StyleSheet.create({
   },
   btnCancelar: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 15,
+    paddingVertical: 9,
+    borderRadius: 10,
     alignItems: "center",
     borderWidth: 1.5,
     borderColor: Colors.cinzaClaro,
   },
   btnCancelarText: {
     fontFamily: Fonts.semiBold,
-    fontSize: GlobalFontSize.subtitle,
+    fontSize: GlobalFontSize.text,
     color: Colors.grafite,
   },
   btnSalvar: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 15,
+    paddingVertical: 9,
+    borderRadius: 10,
     alignItems: "center",
     backgroundColor: Colors.roxo,
   },
   btnSalvarText: {
     fontFamily: Fonts.semiBold,
-    fontSize: GlobalFontSize.subtitle,
+    fontSize: GlobalFontSize.text,
     color: Colors.branco,
+  },
+  participantesHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    zIndex: 9999,
+  },
+  btnSairGrupo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#d9534f",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  btnSairGrupoText: {
+    color: Colors.branco,
+    fontSize: 13,
+    fontFamily: Fonts.semiBold,
+  },
+  menuBox: {
+    position: "absolute",
+    right: 20,
+    top: 5,
+    backgroundColor: Colors.branco,
+    borderRadius: 8,
+    padding: 10,
+    elevation: 5,
+  },
+  menuItem: {
+    paddingVertical: 8,
+  },
+  menuText: {
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+    color: Colors.grafite,
+  },
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#00000088",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalBox: {
+    width: "85%",
+    backgroundColor: Colors.branco,
+    borderRadius: 15,
+    padding: 20,
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 15,
+    gap: 20,
+  },
+  dropdownMenu: {
+    position: "absolute",
+    top: 35,
+    right: 0,
+    backgroundColor: Colors.branco,
+    borderRadius: 10,
+    minWidth: 160,
+    zIndex: 99999,
+    elevation: 999,
+    borderWidth: 1,
+    borderColor: Colors.cinzaClaro,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  dropdownItem: {
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  dropdownText: {
+    fontFamily: Fonts.semiBold,
+    fontSize: 14,
+    color: Colors.rosa,
+  },
+  bannerPendente: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: Colors.azulClaro,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.azulEscuro,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 20,
+  },
+  bannerPendenteText: {
+    flex: 1,
+    fontFamily: Fonts.regular,
+    fontSize: 13,
+    color: Colors.azulEscuro,
+    lineHeight: 18,
+  },
+  pedidoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.cinzaClaro,
+  },
+  pedidoInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  pedidoNome: {
+    fontFamily: Fonts.regular,
+    fontSize: GlobalFontSize.text,
+    color: Colors.grafite,
+  },
+  pedidoAcoes: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  btnAprovar: {
+    backgroundColor: Colors.roxo,
+    borderRadius: 20,
+    width: 34,
+    height: 34,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  btnRejeitar: {
+    borderWidth: 1.5,
+    borderColor: Colors.rosa,
+    borderRadius: 20,
+    width: 34,
+    height: 34,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

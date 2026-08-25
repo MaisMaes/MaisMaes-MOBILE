@@ -3,4 +3,5 @@ export interface ListarGrupoTematicoDTO {
   titulo: string;
   descricao: string;
   bairros: string[];
+  banido?: boolean;
 }

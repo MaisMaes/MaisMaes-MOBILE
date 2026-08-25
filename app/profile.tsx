@@ -1,21 +1,24 @@
 import AppHeader from "@/components/AppHeader";
 import BottomBar from "@/components/BottomBar";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
+import TokenService from "@/service/TokenService";
 import UsuarioService, { UsuarioMe } from "@/service/UsuarioService";
 import PopupService from "@/utils/PopupService";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type Usuario = UsuarioMe;
 
 export default function Profile() {
+  const router = useRouter();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -50,6 +53,11 @@ export default function Profile() {
     buscarUsuario();
   }, []);
 
+  async function sair() {
+    await TokenService.removeToken();
+    router.replace("/");
+  }
+
   function cancelarEdicao() {
     if (usuarioOriginal) {
       setNome(usuarioOriginal.nome);
@@ -66,7 +74,7 @@ export default function Profile() {
       <AppHeader titulo="Perfil" logo />
 
       <View style={styles.content}>
-        <View style={styles.avatar} />
+        <Text style={styles.greeting}>Olá, {nome}</Text>
         <TextInput
           style={styles.input}
           value={nome}
@@ -120,6 +128,10 @@ export default function Profile() {
               {editando ? "Salvar" : "Editar"}
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity style={styles.logoutButton} onPress={sair}>
+            <Text style={styles.saveText}>Sair</Text>
+          </TouchableOpacity>
         </View>
       </View>
       <BottomBar />
@@ -156,11 +168,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 10,
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    backgroundColor: "#c0c4cc",
-    borderRadius: 20,
+  greeting: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: Colors.roxo,
     marginBottom: 30,
   },
   input: {
@@ -184,9 +195,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     backgroundColor: "#fff",
   },
+  logoutButton: {
+    height: 45,
+    width: 100,
+    marginLeft: 10,
+    backgroundColor: "#d9534f",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+  },
   buttonContainer: {
     flexDirection: "row",
     marginTop: 20,
+    alignItems: "center",
   },
   deleteButton: {
     width: 60,
