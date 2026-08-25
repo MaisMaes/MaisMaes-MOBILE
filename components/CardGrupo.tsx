@@ -1,9 +1,11 @@
 import AppText from "@/components/AppText";
+import ChatBubbleIcon from "@/components/ChatBubbleIcon";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
 import GrupoTematicoService from "@/service/GrupoTematicoService";
 import PopupService from "@/utils/PopupService";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface CardGrupoProps {
@@ -14,6 +16,7 @@ interface CardGrupoProps {
   isFavorito?: boolean;
   onPress?: () => void;
   onParticipar?: () => void;
+  onFavoritoAlterado?: () => void;
 }
 
 export default function CardGrupo({
@@ -24,8 +27,42 @@ export default function CardGrupo({
   isFavorito = false,
   onPress,
   onParticipar,
+  onFavoritoAlterado,
 }: CardGrupoProps) {
   const router = useRouter();
+  const [verificandoChat, setVerificandoChat] = useState(false);
+  const [eParticipante, setEParticipante] = useState<boolean | null>(null);
+
+  const handleAbrirChat = async () => {
+    if (eParticipante === false) {
+      PopupService.info(
+        "Você precisa participar do grupo para acessar o chat.",
+      );
+      return;
+    }
+
+    setVerificandoChat(true);
+    try {
+      const status = await GrupoTematicoService.verificarParticipacao(id);
+      setEParticipante(status.participante);
+      if (!status.participante) {
+        PopupService.info(
+          "Você precisa participar do grupo para acessar o chat.",
+        );
+        return;
+      }
+    } catch {
+      PopupService.error("Erro ao verificar participação.");
+      return;
+    } finally {
+      setVerificandoChat(false);
+    }
+
+    router.push({
+      pathname: "/ChatPage" as never,
+      params: { groupId: id.toString() },
+    });
+  };
 
   const handlePress = () => {
     if (onPress) {
@@ -40,14 +77,35 @@ export default function CardGrupo({
 
   const onAddPress = async () => {
     try {
-      await GrupoTematicoService.participar(id);
-      PopupService.success("Você entrou no grupo com sucesso!");
-      onParticipar?.();
+      const mensagem = await GrupoTematicoService.participar(id);
+      const isPendente = mensagem?.toLowerCase().includes("pedido");
+      if (isPendente) {
+        PopupService.info(mensagem);
+      } else {
+        PopupService.success(mensagem ?? "Você entrou no grupo com sucesso!");
+        onParticipar?.();
+      }
     } catch (error: any) {
       const message =
         error?.response?.data?.error ??
         "Erro ao tentar entrar no grupo. Tente novamente.";
       PopupService.error(message);
+    }
+  };
+
+  const handleFavorito = async () => {
+    try {
+      if (isFavorito) {
+        await GrupoTematicoService.removerFavorito(id);
+        PopupService.success("Grupo removido dos favoritos");
+      } else {
+        await GrupoTematicoService.favoritar(id);
+        PopupService.success("Grupo adicionado aos favoritos");
+      }
+
+      onFavoritoAlterado?.();
+    } catch (error) {
+      PopupService.error("Erro ao atualizar favorito");
     }
   };
 
@@ -58,7 +116,12 @@ export default function CardGrupo({
       activeOpacity={0.8}
     >
       <View style={styles.iconContainer}>
-        <Ionicons name="chatbubble-outline" size={28} color={Colors.grafite} />
+        <ChatBubbleIcon
+          compact
+          onPress={handleAbrirChat}
+          loading={verificandoChat}
+          disabled={eParticipante === false}
+        />
       </View>
 
       <View style={styles.infoContainer}>
@@ -79,7 +142,7 @@ export default function CardGrupo({
       </View>
 
       <View style={styles.actionsContainer}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleFavorito}>
           <Ionicons
             name={isFavorito ? "heart" : "heart-outline"}
             size={26}

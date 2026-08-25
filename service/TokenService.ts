@@ -6,6 +6,7 @@ const TOKEN_KEY = "auth_token";
 
 export interface JwtPayload {
   sub: string;
+  nome: string;
   role: string;
   id: string;
 }

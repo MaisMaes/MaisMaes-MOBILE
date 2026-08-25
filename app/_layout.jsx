@@ -48,6 +48,18 @@ export default function RootLayout() {
           name="DetalheGrupoPage"
           options={{ animation: "ios_from_right", gestureEnabled: true }}
         />
+        <Stack.Screen
+          name="ChatPage"
+          options={{ animation: "ios_from_right", gestureEnabled: true }}
+        />
+        <Stack.Screen
+          name="NoticiasPage"
+          options={{ animation: "slide_from_right", gestureEnabled: true }}
+        />
+        <Stack.Screen
+          name="DetalheNoticiaPage"
+          options={{ animation: "ios_from_right", gestureEnabled: true }}
+        />
       </Stack>
       <Toast />
     </>

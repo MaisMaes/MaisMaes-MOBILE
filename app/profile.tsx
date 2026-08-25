@@ -1,21 +1,24 @@
-import TokenService from "@/service/TokenService";
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Platform } from "react-native";
-import { useRouter } from "expo-router";
-import axios from "axios";
-import { Ionicons } from "@expo/vector-icons";
-import { useState, useEffect } from "react";
+import AppHeader from "@/components/AppHeader";
 import BottomBar from "@/components/BottomBar";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
+import TokenService from "@/service/TokenService";
+import UsuarioService, { UsuarioMe } from "@/service/UsuarioService";
 import PopupService from "@/utils/PopupService";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-type Usuario = {
-  nome: string;
-  email: string;
-  telefone: string;
-};
+type Usuario = UsuarioMe;
 
 export default function Profile() {
-
+  const router = useRouter();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -25,21 +28,11 @@ export default function Profile() {
 
   async function buscarUsuario() {
     try {
-      const token = await TokenService.getToken();
-
-      const response = await axios.get("http://192.168.137.194:8080/usuario/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = response.data;
-
+      const data = await UsuarioService.me();
       setNome(data.nome);
       setEmail(data.email);
       setTelefone(data.telefone);
       setUsuarioOriginal(data);
-
     } catch (error) {
       console.log("Erro ao buscar usuário:", error);
     }
@@ -47,26 +40,9 @@ export default function Profile() {
 
   async function atualizarUsuario() {
     try {
-      const token = await TokenService.getToken();
-
-      await axios.patch(
-        "http://192.168.137.194:8080/usuario/atualizar",
-        {
-          nome,
-          email,
-          telefone,
-          senha,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+      await UsuarioService.atualizar({ nome, email, telefone, senha });
       PopupService.success("Perfil atualizado com sucesso!");
       setEditando(false);
-
     } catch (error) {
       console.log(error);
       PopupService.error("Erro ao atualizar perfil. Tente novamente.");
@@ -77,6 +53,11 @@ export default function Profile() {
     buscarUsuario();
   }, []);
 
+  async function sair() {
+    await TokenService.removeToken();
+    router.replace("/");
+  }
+
   function cancelarEdicao() {
     if (usuarioOriginal) {
       setNome(usuarioOriginal.nome);
@@ -84,23 +65,16 @@ export default function Profile() {
       setTelefone(usuarioOriginal.telefone);
     }
 
-    setSenha(""); 
+    setSenha("");
     setEditando(false);
   }
 
-  const router = useRouter();
   return (
-    <>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      <AppHeader titulo="Perfil" logo />
 
-        <Text style={styles.title}>Perfil</Text>
-      </View>
-      <View style={styles.container}>
-       
-        <View style={styles.avatar} />
+      <View style={styles.content}>
+        <Text style={styles.greeting}>Olá, {nome}</Text>
         <TextInput
           style={styles.input}
           value={nome}
@@ -131,7 +105,6 @@ export default function Profile() {
         />
 
         <View style={styles.buttonContainer}>
-
           {editando && (
             <TouchableOpacity
               style={styles.cancelButton}
@@ -156,19 +129,35 @@ export default function Profile() {
             </Text>
           </TouchableOpacity>
 
+          <TouchableOpacity style={styles.logoutButton} onPress={sair}>
+            <Text style={styles.saveText}>Sair</Text>
+          </TouchableOpacity>
         </View>
-        <BottomBar/>
       </View>
-    </>
-  )
+      <BottomBar />
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.roxo,
+  },
+  header: {
+    height: "10%",
+    alignItems: "center",
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    justifyContent: "flex-end",
+    backgroundColor: Colors.roxo,
+    paddingRight: 30,
+  },
+  content: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.branco
+    backgroundColor: Colors.branco,
   },
   cancelButton: {
     height: 45,
@@ -179,11 +168,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 10,
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    backgroundColor: "#c0c4cc",
-    borderRadius: 20,
+  greeting: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: Colors.roxo,
     marginBottom: 30,
   },
   input: {
@@ -207,9 +195,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     backgroundColor: "#fff",
   },
+  logoutButton: {
+    height: 45,
+    width: 100,
+    marginLeft: 10,
+    backgroundColor: "#d9534f",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+  },
   buttonContainer: {
     flexDirection: "row",
     marginTop: 20,
+    alignItems: "center",
   },
   deleteButton: {
     width: 60,
@@ -233,30 +231,20 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
   },
-  header: {
-    backgroundColor: '#B18CB1',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
-    paddingBottom: 15,
-  },
-
   backIcon: {
     fontSize: 60,
     color: "#fff",
-    fontWeight: 'bold'
+    fontWeight: "bold",
   },
   title: {
     color: "#fff",
     fontSize: GlobalFontSize.title,
     fontWeight: "bold",
-    fontFamily: Fonts.regular
+    fontFamily: Fonts.regular,
   },
   headerTitle: {
-    fontSize: 20,
-    color: 'white',
-    fontWeight: 'bold',
-  }
+    fontSize: GlobalFontSize.subtitle,
+    fontFamily: Fonts.bold,
+    color: Colors.branco,
+  },
 });

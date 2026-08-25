@@ -124,8 +124,9 @@ export default function CriarGrupoForm() {
         contentContainerStyle={{ paddingBottom: 40 }}
       >
         {/* Nome do Grupo */}
+        <AppText style={styles.sectionTitle}>Nome do grupo</AppText>
         <TextInput
-          placeholder="Nome do grupo"
+          placeholder="Digite o nome do grupo"
           placeholderTextColor={Colors.cinzaClaro}
           value={nome}
           onChangeText={setNome}
@@ -133,8 +134,9 @@ export default function CriarGrupoForm() {
         />
 
         {/* Descrição */}
+        <AppText style={styles.sectionTitle}>Descrição</AppText>
         <TextInput
-          placeholder="Descrição do grupo"
+          placeholder="Descreva o objetivo do grupo"
           placeholderTextColor={Colors.cinzaClaro}
           value={descricao}
           onChangeText={setDescricao}
@@ -147,12 +149,13 @@ export default function CriarGrupoForm() {
           <Switch
             value={privado}
             onValueChange={setPrivado}
-            trackColor={{ false: Colors.branco, true: Colors.roxo + "77" }}
-            thumbColor={privado ? Colors.roxo : Colors.branco}
+            trackColor={{ false: Colors.cinzaClaro, true: Colors.roxo + "77" }}
+            thumbColor={privado ? Colors.roxo : Colors.cinzaClaro}
           />
         </View>
 
         {/*Bairros */}
+        <AppText style={styles.sectionTitle}>Bairros</AppText>
         <TouchableOpacity
           style={styles.selectorBox}
           onPress={() => setShowBairros(!showBairros)}
@@ -379,8 +382,8 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 15,
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: Colors.branco,
+    borderWidth: 1.5,
+    borderColor: Colors.cinzaClaro,
   },
   mediaLabel: {
     fontSize: 13,

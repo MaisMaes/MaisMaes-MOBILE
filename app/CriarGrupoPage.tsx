@@ -1,17 +1,13 @@
-import AppText from "@/components/AppText";
+import AppHeader from "@/components/AppHeader";
 import CriarGrupoForm from "@/components/form/CriarGrupoForm";
-import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
+import { Colors } from "@/constants/GlobalStyles";
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CriarGrupoPage() {
   return (
     <SafeAreaView style={styles.container}>
-
-      <View style={styles.header}>
-        <AppText style={styles.title}>Criar grupo</AppText>
-      </View>
-
+      <AppHeader titulo="Criar grupo" showBack />
 
       <View style={styles.formContainer}>
         <CriarGrupoForm />
@@ -23,28 +19,11 @@ export default function CriarGrupoPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.azulClaro,
-  },
-
-  header: {
-    height: "10%",
-    alignItems: "center",
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    justifyContent: "flex-end",
     backgroundColor: Colors.roxo,
-    paddingRight: 30,
-    fontSize: GlobalFontSize.title,
   },
-
-  title: {
-    fontSize: GlobalFontSize.title,
-    fontFamily: Fonts.semiBold,
-    color: Colors.branco,
-  },
-
   formContainer: {
     flex: 1,
     paddingTop: 10,
+    backgroundColor: Colors.branco,
   },
 });

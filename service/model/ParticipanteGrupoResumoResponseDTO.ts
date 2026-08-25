@@ -1,5 +1,5 @@
 export interface ParticipanteGrupoResumoResponseDTO {
-  id: string;
+  usuarioId: string;
   nome: string;
   role: string;
 }
