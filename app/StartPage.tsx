@@ -43,7 +43,7 @@ export default function StartPage() {
               style={[styles.labelDecoration, { opacity: loginAnim }]}
             />
           </View>
-          <View style={{ width: "25%", alignItems: "center" }}>
+          <View style={{ width: "30%", alignItems: "center" }}>
             <AppText style={styles.labels} onPress={() => handleSwitch(false)}>
               Cadastre-se
             </AppText>

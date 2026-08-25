@@ -2,13 +2,13 @@ import AppText from "@/components/AppText";
 import { Colors, GlobalFontSize } from "@/constants/GlobalStyles";
 import AuthService from "@/service/AuthService";
 import { LoginRequest } from "@/service/model/LoginRequest";
-import TokenService from "@/service/TokenService";
 import PopupService from "@/utils/PopupService";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import AppButton from "../AppButton";
 import Input from "../input";
+import { AuthResponse, PerfilStatus } from "@/service/model/AuthResponse";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -39,13 +39,21 @@ export default function Login() {
       return;
     }
     try {
-      const response = await AuthService.login(loginData);
-      await TokenService.saveToken(response.token);
+      const response:AuthResponse = await AuthService.login(loginData);
       PopupService.success("Login realizado com sucesso!");
-      setTimeout(() => navigate.replace("/GrupoPage"), 2000);
-    } catch (error) {
-      console.error("Erro no login:", error);
-      PopupService.error("Falha no login. Verifique suas credenciais.");
+      setTimeout(() => navigate.replace("/HomePage"), 2000);
+    } catch (error:any) {
+      const response:AuthResponse = error.response.data;
+      switch (response.status) {
+        case PerfilStatus.DESATIVADO:
+          PopupService.error("Sua conta ainda não foi ativada. Verifique seu e-mail");
+          break;
+        case PerfilStatus.BANIDO:
+          PopupService.error("Sua conta foi banida. Entre em contato com o suporte.");
+          break;
+        default:
+          PopupService.error("Falha no login. Verifique suas credenciais.");
+      }
     }
   };
 

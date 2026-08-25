@@ -65,8 +65,7 @@ export default function Cadastro() {
       return;
     }
     try {
-      const response = await UsuarioService.cadastrar(cadastrarData);
-      await TokenService.saveToken(response.token);
+      await UsuarioService.cadastrar(cadastrarData);
       PopupService.success("Cadastro realizado com sucesso!");
       setTimeout(() => router.replace("/StartPage"), 2000);
     } catch (error: any) {
