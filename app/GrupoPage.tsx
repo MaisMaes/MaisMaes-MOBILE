@@ -1,16 +1,14 @@
-import React, { useEffect, useState } from "react";
-import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
-
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import AppHeader from "@/components/AppHeader";
@@ -43,11 +41,13 @@ export default function GrupoPage() {
   const [carregandoFavoritos, setCarregandoFavoritos] = useState(true);
 
   const [busca, setBusca] = useState("");
+  const [termoPesquisado, setTermoPesquisado] = useState(""); 
   const [categoriaAtiva, setCategoriaAtiva] = useState("");
 
   const carregarDados = async (termo = "") => {
     try {
       setCarregando(true);
+      setTermoPesquisado(termo);
 
       const data = termo
         ? await GrupoTematicoService.pesquisar(termo)
@@ -56,6 +56,7 @@ export default function GrupoPage() {
       setGrupos(data.filter((g) => !g.banido));
     } catch (e) {
       console.log("Erro ao buscar grupos:", e);
+      setGrupos([]); 
     } finally {
       setCarregando(false);
     }
@@ -64,9 +65,7 @@ export default function GrupoPage() {
   const carregarMeusGrupos = async () => {
     try {
       setCarregandoMeus(true);
-
       const data = await GrupoTematicoService.listarMeusGrupos();
-
       setMeusGrupos(data.filter((g) => !g.banido));
     } catch (e) {
       console.log("Erro ao buscar meus grupos:", e);
@@ -78,9 +77,7 @@ export default function GrupoPage() {
   const carregarFavoritos = async () => {
     try {
       setCarregandoFavoritos(true);
-
       const data = await GrupoTematicoService.listarFavoritos();
-
       setFavoritos(data.filter((g) => !g.banido));
     } catch (e) {
       console.log("Erro ao buscar favoritos:", e);
@@ -97,25 +94,26 @@ export default function GrupoPage() {
 
   useFocusEffect(
     useCallback(() => {
-      carregarDados(busca);
+      carregarDados(termoPesquisado);
       carregarMeusGrupos();
       carregarFavoritos();
-    }, []),
+    }, [termoPesquisado]),
   );
 
   const atualizarTudo = async () => {
-    await carregarDados(busca);
+    await carregarDados(termoPesquisado);
     await carregarFavoritos();
     await carregarMeusGrupos();
   };
 
   const handleCategoriaPress = (cat: string) => {
     const novaCat = categoriaAtiva === cat ? "" : cat;
-
     setCategoriaAtiva(novaCat);
-
     carregarDados(novaCat);
   };
+
+  // A tela só entra no modo pesquisa quando o usuário CONFIRMA a busca
+  const isPesquisando = termoPesquisado.trim() !== "" || categoriaAtiva !== "";
 
   return (
     <SafeAreaView style={styles.container}>
@@ -133,7 +131,13 @@ export default function GrupoPage() {
                 style={styles.input}
                 placeholder="Pesquisar..."
                 value={busca}
-                onChangeText={setBusca}
+                onChangeText={(text) => {
+                  setBusca(text);
+                 
+                  if (text === "") {
+                    carregarDados("");
+                  }
+                }}
                 onSubmitEditing={() => carregarDados(busca)}
               />
 
@@ -177,86 +181,115 @@ export default function GrupoPage() {
           </View>
         ) : (
           <ScrollView contentContainerStyle={styles.list}>
-            <AppText style={styles.sectionTitle}>Estou participando</AppText>
-
-            {carregandoMeus ? (
-              <ActivityIndicator size="small" color={Colors.roxo} />
-            ) : meusGrupos.length === 0 ? (
-              <AppText style={styles.emptyText}>
-                Você ainda não participa de nenhum grupo.
-              </AppText>
-            ) : (
-              meusGrupos.map((item) => (
-                <CardGrupo
-                  key={item.id}
-                  id={item.id}
-                  titulo={item.titulo}
-                  descricao={item.descricao}
-                  bairros={item.bairros}
-                  isFavorito={favoritos.some((f) => f.id === item.id)}
-                  onFavoritoAlterado={atualizarTudo}
-                />
-              ))
-            )}
-
-            <AppText style={[styles.sectionTitle, { marginTop: 20 }]}>
-              Favoritos
-            </AppText>
-
-            {carregandoFavoritos ? (
-              <ActivityIndicator size="small" color={Colors.roxo} />
-            ) : favoritos.length === 0 ? (
-              <AppText style={styles.emptyText}>
-                Nenhum grupo favoritado.
-              </AppText>
-            ) : (
-              favoritos.map((item) => (
-                <CardGrupo
-                  key={item.id}
-                  id={item.id}
-                  titulo={item.titulo}
-                  descricao={item.descricao}
-                  bairros={item.bairros}
-                  isFavorito={true}
-                  onFavoritoAlterado={atualizarTudo}
-                />
-              ))
-            )}
-
-            <AppText style={[styles.sectionTitle, { marginTop: 20 }]}>
-              Outros grupos
-            </AppText>
-
-            {carregando ? (
-              <ActivityIndicator size="small" color={Colors.roxo} />
-            ) : grupos.filter(
-                (g) =>
-                  !meusGrupos.some((m) => m.id === g.id) &&
-                  !favoritos.some((f) => f.id === g.id),
-              ).length === 0 ? (
-              <AppText style={styles.emptyText}>
-                Nenhum grupo encontrado.
-              </AppText>
-            ) : (
-              grupos
-                .filter(
-                  (g) =>
-                    !meusGrupos.some((m) => m.id === g.id) &&
-                    !favoritos.some((f) => f.id === g.id),
-                )
-                .map((item) => (
+            
+            {/* RESULTADOS DA BUSCA */}
+            <View style={{ display: isPesquisando ? "flex" : "none" }}>
+              <AppText style={styles.sectionTitle}>Resultados da Busca</AppText>
+              
+              {carregando ? (
+                <ActivityIndicator size="small" color={Colors.roxo} />
+              ) : grupos.length === 0 ? (
+                <AppText style={styles.emptyText}>
+                  Nenhum grupo encontrado.
+                </AppText>
+              ) : (
+                grupos.map((item) => (
                   <CardGrupo
-                    key={item.id}
+                    key={`search-${item.id}`} 
                     id={item.id}
                     titulo={item.titulo}
                     descricao={item.descricao}
                     bairros={item.bairros}
-                    isFavorito={false}
+                    isFavorito={favoritos.some((f) => f.id === item.id)}
                     onParticipar={carregarMeusGrupos}
                     onFavoritoAlterado={atualizarTudo}
                   />
                 ))
-            )}
+              )}
+            </View>
+
+            {/*SEÇÕES PADRÕES */}
+            <View style={{ display: isPesquisando ? "none" : "flex" }}>
+              
+              <AppText style={styles.sectionTitle}>Estou participando</AppText>
+              {carregandoMeus ? (
+                <ActivityIndicator size="small" color={Colors.roxo} />
+              ) : meusGrupos.length === 0 ? (
+                <AppText style={styles.emptyText}>
+                  Você ainda não participa de nenhum grupo.
+                </AppText>
+              ) : (
+                meusGrupos.map((item) => (
+                  <CardGrupo
+                    key={`meus-${item.id}`}
+                    id={item.id}
+                    titulo={item.titulo}
+                    descricao={item.descricao}
+                    bairros={item.bairros}
+                    isFavorito={favoritos.some((f) => f.id === item.id)}
+                    onFavoritoAlterado={atualizarTudo}
+                  />
+                ))
+              )}
+
+              <AppText style={[styles.sectionTitle, { marginTop: 20 }]}>
+                Favoritos
+              </AppText>
+              {carregandoFavoritos ? (
+                <ActivityIndicator size="small" color={Colors.roxo} />
+              ) : favoritos.length === 0 ? (
+                <AppText style={styles.emptyText}>
+                  Nenhum grupo favoritado.
+                </AppText>
+              ) : (
+                favoritos.map((item) => (
+                  <CardGrupo
+                    key={`fav-${item.id}`}
+                    id={item.id}
+                    titulo={item.titulo}
+                    descricao={item.descricao}
+                    bairros={item.bairros}
+                    isFavorito={true}
+                    onFavoritoAlterado={atualizarTudo}
+                  />
+                ))
+              )}
+
+              <AppText style={[styles.sectionTitle, { marginTop: 20 }]}>
+                Outros grupos
+              </AppText>
+              {carregando ? (
+                <ActivityIndicator size="small" color={Colors.roxo} />
+              ) : grupos.filter(
+                  (g) =>
+                    !meusGrupos.some((m) => m.id === g.id) &&
+                    !favoritos.some((f) => f.id === g.id),
+                ).length === 0 ? (
+                <AppText style={styles.emptyText}>
+                  Nenhum grupo encontrado.
+                </AppText>
+              ) : (
+                grupos
+                  .filter(
+                    (g) =>
+                      !meusGrupos.some((m) => m.id === g.id) &&
+                      !favoritos.some((f) => f.id === g.id),
+                  )
+                  .map((item) => (
+                    <CardGrupo
+                      key={`outros-${item.id}`}
+                      id={item.id}
+                      titulo={item.titulo}
+                      descricao={item.descricao}
+                      bairros={item.bairros}
+                      isFavorito={false}
+                      onParticipar={carregarMeusGrupos}
+                      onFavoritoAlterado={atualizarTudo}
+                    />
+                  ))
+              )}
+
+            </View>
           </ScrollView>
         )}
       </View>
@@ -266,6 +299,7 @@ export default function GrupoPage() {
 }
 
 const styles = StyleSheet.create({
+ 
   container: {
     flex: 1,
     backgroundColor: Colors.roxo,
