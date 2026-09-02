@@ -2,55 +2,49 @@ import AppText from "@/components/AppText";
 import { Colors, Fonts, GlobalFontSize } from "@/constants/GlobalStyles";
 import { InfoCard } from "@/service/InfoCardService";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import React, { useState } from "react";
+import { Image, Pressable, StyleSheet, View } from "react-native";
 
 interface CardNoticiaProps {
   noticia: InfoCard;
   onPress: () => void;
 }
 
-export default function CardNoticia({
-  noticia,
-  onPress,
-}: CardNoticiaProps) {
-  const dataFormatada = new Date(
-    noticia.dataCriacao
-  ).toLocaleDateString("pt-BR", {
+export default function CardNoticia({ noticia, onPress }: CardNoticiaProps) {
+  const [imageError, setImageError] = useState(false);
+
+  const dataFormatada = new Date(noticia.dataCriacao).toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
 
+  // Valida se existe imagem e se não ocorreu erro durante o carregamento
+  const hasValidImage = Boolean(noticia.imagem && !imageError);
+
   return (
-    <Pressable
-      style={styles.card}
-      onPress={onPress}
-    >
+    <Pressable style={styles.card} onPress={onPress}>
       <View style={styles.iconContainer}>
-        <Ionicons
-          name="newspaper-outline"
-          size={28}
-          color={Colors.grafite}
-        />
+        {hasValidImage ? (
+          <Image
+            source={{ uri: noticia.imagem }}
+            style={styles.image}
+            resizeMode="cover"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <Ionicons name="newspaper-outline" size={28} color={Colors.grafite} />
+        )}
       </View>
 
       <View style={styles.infoContainer}>
-        <AppText
-          style={styles.titulo}
-          numberOfLines={1}
-        >
+        <AppText style={styles.titulo} numberOfLines={1}>
           {noticia.titulo}
         </AppText>
 
-        <AppText style={styles.data}>
-          {dataFormatada}
-        </AppText>
+        <AppText style={styles.data}>{dataFormatada}</AppText>
 
-        <AppText
-          style={styles.descricao}
-          numberOfLines={2}
-        >
+        <AppText style={styles.descricao} numberOfLines={2}>
           {noticia.descricao}
         </AppText>
       </View>
@@ -60,7 +54,7 @@ export default function CardNoticia({
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: "column", 
+    flexDirection: "column",
     backgroundColor: Colors.branco,
     borderWidth: 1.5,
     borderColor: Colors.grafite,
@@ -76,15 +70,19 @@ const styles = StyleSheet.create({
 
   iconContainer: {
     width: "100%",
-    height: 60, 
+    height: 120, // Altura ajustada para destacar a imagem da notícia
     backgroundColor: Colors.azulClaro,
     borderRadius: 18,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
     justifyContent: "center",
     alignItems: "center",
     borderColor: Colors.grafite,
     marginTop: 6,
+    overflow: "hidden", 
+  },
+
+  image: {
+    width: "100%",
+    height: "100%",
   },
 
   infoContainer: {
@@ -94,7 +92,7 @@ const styles = StyleSheet.create({
   },
 
   titulo: {
-    marginTop: 20,
+    marginTop: 12,
     fontFamily: Fonts.semiBold,
     fontSize: GlobalFontSize.subtitle,
     color: Colors.grafite,
@@ -102,9 +100,9 @@ const styles = StyleSheet.create({
 
   data: {
     fontFamily: Fonts.regular,
-    fontSize: 11,
+    fontSize: 12,
     color: Colors.cinzaClaro,
-    textAlign: "right",
+    textAlign: "left",
   },
 
   descricao: {
