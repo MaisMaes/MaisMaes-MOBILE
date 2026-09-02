@@ -72,7 +72,6 @@ export default function Cadastro() {
       const message =
         error?.response?.data?.error ?? "Falha no cadastro. Tente novamente.";
       PopupService.error(message);
-      console.error("Erro no cadastro:", error);
     }
   };
 
