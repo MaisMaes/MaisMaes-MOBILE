@@ -71,7 +71,7 @@ class ChatService {
       console.log("[ChatService] SockJS aberto");
     };
     socket.onerror = (event: any) => {
-      console.error("[ChatService] SockJS erro", event);
+      console.log("[ChatService] SockJS erro", event);
       onError?.("Falha ao abrir a conexão SockJS.");
     };
     socket.onclose = (event: any) => {
@@ -95,7 +95,7 @@ class ChatService {
               const message = JSON.parse(frame.body) as ChatMessage;
               onMessage(message);
             } catch {
-              console.error(
+              console.log(
                 "[ChatService] Falha ao processar mensagem recebida",
                 frame.body,
               );
@@ -109,7 +109,7 @@ class ChatService {
         );
       },
       (error: any) => {
-        console.error("[ChatService] Erro STOMP", error);
+        console.log("[ChatService] Erro STOMP", error);
         onError?.(error?.body ?? "Não foi possível conectar ao chat.");
       },
     );
