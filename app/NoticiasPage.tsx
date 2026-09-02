@@ -36,7 +36,7 @@ export default function NoticiasPage() {
 
       setNoticias(resultado);
     } catch (error) {
-      console.error("Erro ao carregar notícias:", error);
+      console.log("Erro ao carregar notícias:", error);
     } finally {
       setCarregando(false);
     }
