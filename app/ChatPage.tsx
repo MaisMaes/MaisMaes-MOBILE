@@ -6,11 +6,18 @@ import TokenService from "@/service/TokenService";
 import { ChatMessage } from "@/service/model/ChatMessage";
 import PopupService from "@/utils/PopupService";
 import { Ionicons } from "@expo/vector-icons";
-import { Audio, ResizeMode, Video } from "expo-av";
+import {
+  createAudioPlayer,
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+} from "expo-audio";
 import * as DocumentPicker from "expo-document-picker";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -25,6 +32,21 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+function VideoMensagem({ uri }: { uri: string }) {
+  const player = useVideoPlayer(uri, (videoPlayer) => {
+    videoPlayer.loop = false;
+  });
+
+  return (
+    <VideoView
+      player={player}
+      style={styles.videoMensagem}
+      nativeControls
+      contentFit="contain"
+    />
+  );
+}
 
 export default function ChatPage() {
   const router = useRouter();
@@ -43,8 +65,13 @@ export default function ChatPage() {
   const [carregandoHistorico, setCarregandoHistorico] = useState(false);
   const [carregandoMaisHistorico, setCarregandoMaisHistorico] = useState(false);
   const deveAutoScrollRef = useRef(false);
-  const recordingRef = useRef<Audio.Recording | null>(null);
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const audioPlayerRef = useRef<ReturnType<typeof createAudioPlayer> | null>(
+    null,
+  );
+  const audioPlaybackWatchRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
 
   const [permissoesGrupo, setPermissoesGrupo] = useState({
     video: false,
@@ -175,10 +202,21 @@ export default function ChatPage() {
 
   useEffect(() => {
     return () => {
-      soundRef.current?.unloadAsync().catch(() => {});
-      recordingRef.current?.stopAndUnloadAsync().catch(() => {});
+      if (audioPlaybackWatchRef.current) {
+        clearInterval(audioPlaybackWatchRef.current);
+        audioPlaybackWatchRef.current = null;
+      }
+
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.remove();
+        audioPlayerRef.current = null;
+      }
+
+      if (gravandoAudio) {
+        recorder.stop().catch(() => {});
+      }
     };
-  }, []);
+  }, [gravandoAudio, recorder]);
 
   useEffect(() => {
     if (!groupId || Number.isNaN(grupoIdNumerico)) {
@@ -308,13 +346,12 @@ export default function ChatPage() {
   };
 
   const toggleGravacao = async () => {
-    if (gravandoAudio && recordingRef.current) {
+    if (gravandoAudio) {
       try {
         setGravandoAudio(false);
-        await recordingRef.current.stopAndUnloadAsync();
-        const uri = recordingRef.current.getURI();
-        recordingRef.current = null;
-        await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+        await recorder.stop();
+        const uri = recorder.uri;
+        await setAudioModeAsync({ allowsRecording: false });
         if (uri) {
           await uploadESendArquivo(
             uri,
@@ -331,16 +368,14 @@ export default function ChatPage() {
     }
 
     try {
-      const perm = await Audio.requestPermissionsAsync();
+      const perm = await requestRecordingPermissionsAsync();
       if (!perm.granted) return;
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
       });
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY,
-      );
-      recordingRef.current = recording;
+      await recorder.prepareToRecordAsync();
+      recorder.record();
       setGravandoAudio(true);
     } catch (error) {
       PopupService.error("Erro ao iniciar gravação.");
@@ -349,29 +384,110 @@ export default function ChatPage() {
 
   const playAudio = async (fileId: string) => {
     if (audioPlayingId === fileId) {
-      await soundRef.current?.pauseAsync();
+      if (audioPlaybackWatchRef.current) {
+        clearInterval(audioPlaybackWatchRef.current);
+        audioPlaybackWatchRef.current = null;
+      }
+
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.remove();
+        audioPlayerRef.current = null;
+      }
+
       setAudioPlayingId(null);
       return;
     }
+
     try {
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
+      if (audioPlaybackWatchRef.current) {
+        clearInterval(audioPlaybackWatchRef.current);
+        audioPlaybackWatchRef.current = null;
       }
+
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.remove();
+        audioPlayerRef.current = null;
+      }
+
+      await setAudioModeAsync({
+        allowsRecording: false,
+        playsInSilentMode: true,
+      });
+
       setAudioPlayingId(fileId);
       const url = ChatService.urlArquivo(fileId);
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: url },
-        { shouldPlay: true },
-      );
-      soundRef.current = sound;
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          setAudioPlayingId(null);
-          sound.unloadAsync().catch(() => {});
-          soundRef.current = null;
-        }
+      const token = await TokenService.getToken();
+      const source = token
+        ? { uri: url, headers: { Authorization: `Bearer ${token}` } }
+        : url;
+      const player = createAudioPlayer(source, {
+        updateInterval: 500,
+        downloadFirst: true,
+        keepAudioSessionActive: true,
       });
+      player.muted = false;
+      player.volume = 1;
+      audioPlayerRef.current = player;
+      player.play();
+
+      let ultimoTempo = -1;
+      let ticksSemProgresso = 0;
+
+      audioPlaybackWatchRef.current = setInterval(() => {
+        const currentPlayer = audioPlayerRef.current;
+        if (!currentPlayer) return;
+
+        const status = currentPlayer.currentStatus;
+
+        if (status.error) {
+          setAudioPlayingId(null);
+          clearInterval(audioPlaybackWatchRef.current!);
+          audioPlaybackWatchRef.current = null;
+          currentPlayer.remove();
+          audioPlayerRef.current = null;
+          PopupService.error("Não foi possível reproduzir este áudio.");
+          return;
+        }
+
+        if (status.currentTime > ultimoTempo + 0.05) {
+          ultimoTempo = status.currentTime;
+          ticksSemProgresso = 0;
+        } else {
+          ticksSemProgresso += 1;
+        }
+
+        const terminou =
+          status.didJustFinish ||
+          (status.duration > 0 &&
+            !status.playing &&
+            status.currentTime >= status.duration - 0.15);
+
+        const travadoSemSom =
+          status.isLoaded &&
+          !status.playing &&
+          !status.isBuffering &&
+          status.currentTime <= 0 &&
+          ticksSemProgresso >= 20;
+
+        if (travadoSemSom) {
+          setAudioPlayingId(null);
+          clearInterval(audioPlaybackWatchRef.current!);
+          audioPlaybackWatchRef.current = null;
+          currentPlayer.remove();
+          audioPlayerRef.current = null;
+          PopupService.error("Falha ao iniciar a reprodução do áudio.");
+          return;
+        }
+
+        if (!terminou) return;
+
+        setAudioPlayingId(null);
+        clearInterval(audioPlaybackWatchRef.current!);
+        audioPlaybackWatchRef.current = null;
+        currentPlayer.remove();
+        audioPlayerRef.current = null;
+      }, 250);
     } catch (error) {
       PopupService.error("Erro ao reproduzir áudio.");
       setAudioPlayingId(null);
@@ -421,15 +537,7 @@ export default function ChatPage() {
       }
 
       if (mime.startsWith("video/")) {
-        return (
-          <Video
-            source={{ uri: url }}
-            style={styles.videoMensagem}
-            useNativeControls
-            resizeMode={ResizeMode.CONTAIN}
-            isLooping={false}
-          />
-        );
+        return <VideoMensagem uri={url} />;
       }
 
       return (

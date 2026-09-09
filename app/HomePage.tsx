@@ -68,6 +68,7 @@ export default function ChatsPage() {
                 titulo={item.titulo}
                 descricao={item.descricao}
                 bairros={item.bairros}
+                isParticipando={true}
               />
             ))
           )}

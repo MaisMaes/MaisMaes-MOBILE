@@ -41,7 +41,7 @@ export default function GrupoPage() {
   const [carregandoFavoritos, setCarregandoFavoritos] = useState(true);
 
   const [busca, setBusca] = useState("");
-  const [termoPesquisado, setTermoPesquisado] = useState(""); 
+  const [termoPesquisado, setTermoPesquisado] = useState("");
   const [categoriaAtiva, setCategoriaAtiva] = useState("");
 
   const carregarDados = async (termo = "") => {
@@ -56,7 +56,7 @@ export default function GrupoPage() {
       setGrupos(data.filter((g) => !g.banido));
     } catch (e) {
       console.log("Erro ao buscar grupos:", e);
-      setGrupos([]); 
+      setGrupos([]);
     } finally {
       setCarregando(false);
     }
@@ -133,7 +133,7 @@ export default function GrupoPage() {
                 value={busca}
                 onChangeText={(text) => {
                   setBusca(text);
-                 
+
                   if (text === "") {
                     carregarDados("");
                   }
@@ -181,11 +181,10 @@ export default function GrupoPage() {
           </View>
         ) : (
           <ScrollView contentContainerStyle={styles.list}>
-            
             {/* RESULTADOS DA BUSCA */}
             <View style={{ display: isPesquisando ? "flex" : "none" }}>
               <AppText style={styles.sectionTitle}>Resultados da Busca</AppText>
-              
+
               {carregando ? (
                 <ActivityIndicator size="small" color={Colors.roxo} />
               ) : grupos.length === 0 ? (
@@ -195,12 +194,13 @@ export default function GrupoPage() {
               ) : (
                 grupos.map((item) => (
                   <CardGrupo
-                    key={`search-${item.id}`} 
+                    key={`search-${item.id}`}
                     id={item.id}
                     titulo={item.titulo}
                     descricao={item.descricao}
                     bairros={item.bairros}
                     isFavorito={favoritos.some((f) => f.id === item.id)}
+                    isParticipando={meusGrupos.some((m) => m.id === item.id)}
                     onParticipar={carregarMeusGrupos}
                     onFavoritoAlterado={atualizarTudo}
                   />
@@ -210,7 +210,6 @@ export default function GrupoPage() {
 
             {/*SEÇÕES PADRÕES */}
             <View style={{ display: isPesquisando ? "none" : "flex" }}>
-              
               <AppText style={styles.sectionTitle}>Estou participando</AppText>
               {carregandoMeus ? (
                 <ActivityIndicator size="small" color={Colors.roxo} />
@@ -227,6 +226,7 @@ export default function GrupoPage() {
                     descricao={item.descricao}
                     bairros={item.bairros}
                     isFavorito={favoritos.some((f) => f.id === item.id)}
+                    isParticipando={true}
                     onFavoritoAlterado={atualizarTudo}
                   />
                 ))
@@ -250,6 +250,8 @@ export default function GrupoPage() {
                     descricao={item.descricao}
                     bairros={item.bairros}
                     isFavorito={true}
+                    isParticipando={meusGrupos.some((m) => m.id === item.id)}
+                    onParticipar={carregarMeusGrupos}
                     onFavoritoAlterado={atualizarTudo}
                   />
                 ))
@@ -283,12 +285,12 @@ export default function GrupoPage() {
                       descricao={item.descricao}
                       bairros={item.bairros}
                       isFavorito={false}
+                      isParticipando={false}
                       onParticipar={carregarMeusGrupos}
                       onFavoritoAlterado={atualizarTudo}
                     />
                   ))
               )}
-
             </View>
           </ScrollView>
         )}
@@ -299,7 +301,6 @@ export default function GrupoPage() {
 }
 
 const styles = StyleSheet.create({
- 
   container: {
     flex: 1,
     backgroundColor: Colors.roxo,
