@@ -1,13 +1,14 @@
-import { Colors } from "@/constants/GlobalStyles";
-import TokenService from "@/service/TokenService";
+import AppText from "@/components/AppText";
+import TermosUsoModal from "@/components/TermosUsoModal";
+import { Colors, GlobalFontSize } from "@/constants/GlobalStyles";
 import UsuarioService from "@/service/UsuarioService";
 import { CadastroRequest } from "@/service/model/CadastroRequest";
 import PopupService from "@/utils/PopupService";
+import { useRouter } from "expo-router";
 import { useState } from "react";
-import { View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import AppButton from "../AppButton";
 import Input from "../input";
-import { useRouter } from "expo-router";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SENHA_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
@@ -28,6 +29,8 @@ export default function Cadastro() {
     telefone: "",
   });
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [aceitouTermos, setAceitouTermos] = useState(false);
+  const [modalTermosVisivel, setModalTermosVisivel] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
 
@@ -54,6 +57,8 @@ export default function Cadastro() {
     else if (digits.length < 11)
       e.telefone = "Telefone inválido. Ex: (00) 90000-0000";
 
+    if (!aceitouTermos) e.termos = "Você precisa aceitar os termos de uso.";
+
     return e;
   };
 
@@ -66,7 +71,9 @@ export default function Cadastro() {
     }
     try {
       await UsuarioService.cadastrar(cadastrarData);
-      PopupService.success("Cadastro realizado com sucesso! Uma mensagem de ativação foi enviada para o seu email.");
+      PopupService.success(
+        "Cadastro realizado com sucesso! Uma mensagem de ativação foi enviada para o seu email.",
+      );
       setTimeout(() => router.replace("/StartPage"), 2000);
     } catch (error: any) {
       const message =
@@ -127,12 +134,79 @@ export default function Cadastro() {
         }
         errorMessage={errors.telefone}
       />
+      <View style={styles.termosContainer}>
+        <TouchableOpacity
+          style={styles.radio}
+          onPress={() => setAceitouTermos(!aceitouTermos)}
+          accessibilityRole="radio"
+          accessibilityState={{ checked: aceitouTermos }}
+        >
+          {aceitouTermos && <View style={styles.radioSelecionado} />}
+        </TouchableOpacity>
+        <AppText style={styles.termosTexto}>
+          Eu li e concordo com os{" "}
+          <AppText
+            style={styles.termosLink}
+            onPress={() => setModalTermosVisivel(true)}
+          >
+            termos
+          </AppText>{" "}
+          de uso
+        </AppText>
+      </View>
+      {errors.termos && <AppText style={styles.erro}>{errors.termos}</AppText>}
       <AppButton
         text="Enviar"
         backgroundColor={Colors.roxo}
         onPress={handleCadastro}
-        style={{ marginTop: 10 }}
+        style={{ marginTop: 20 }}
+      />
+      <TermosUsoModal
+        visible={modalTermosVisivel}
+        onClose={() => setModalTermosVisivel(false)}
+        onConfirm={() => {
+          setAceitouTermos(true);
+          setModalTermosVisivel(false);
+        }}
       />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  termosContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  radio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: Colors.roxo,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+  },
+  radioSelecionado: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: Colors.roxo,
+  },
+  termosTexto: {
+    fontSize: GlobalFontSize.text,
+    color: Colors.grafite,
+    flexShrink: 1,
+  },
+  termosLink: {
+    color: Colors.roxo,
+    textDecorationLine: "underline",
+  },
+  erro: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 4,
+  },
+});

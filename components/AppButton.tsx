@@ -10,6 +10,7 @@ interface AppButtonProps {
   borderRadius?: number;
   textColor?: string;
   style?: ViewStyle;
+  disabled?: boolean;
 }
 
 export default function AppButton({
@@ -20,6 +21,7 @@ export default function AppButton({
   borderRadius = 24,
   textColor = Colors.branco,
   style,
+  disabled = false,
 }: AppButtonProps) {
   return (
     <TouchableOpacity
@@ -31,8 +33,10 @@ export default function AppButton({
           borderRadius,
         },
         style,
+        disabled && styles.disabled,
       ]}
       onPress={onPress}
+      disabled={disabled}
     >
       <AppText style={[styles.buttonText, { color: textColor }]}>
         {text}
@@ -50,5 +54,8 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: GlobalFontSize.title,
     fontWeight: "bold",
+  },
+  disabled: {
+    opacity: 0.5,
   },
 });
