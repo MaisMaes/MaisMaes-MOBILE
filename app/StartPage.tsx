@@ -31,8 +31,13 @@ export default function StartPage() {
 
   return (
     <View style={{ flex: 1 }}>
-      <LinearGradient colors={[Colors.rosa, Colors.azul]} style={styles.header}>
-        <AppText style={styles.title}><Link href="/profile">+Mães</Link></AppText>
+      <LinearGradient
+        colors={[Colors.rosa, Colors.azul]}
+        style={[styles.header, { height: isLogin ? "40%" : "27%" }]}
+      >
+        <AppText style={styles.title}>
+          <Link href="/profile">+Mães</Link>
+        </AppText>
 
         <View style={styles.labelsContainer}>
           <View style={{ width: "30%", alignItems: "center" }}>
@@ -55,7 +60,7 @@ export default function StartPage() {
       </LinearGradient>
 
       <View style={styles.formContainer}>
-        {isLogin ? <Login /> : <Cadastro/>}
+        {isLogin ? <Login /> : <Cadastro />}
       </View>
     </View>
   );
@@ -63,7 +68,6 @@ export default function StartPage() {
 
 const styles = StyleSheet.create({
   header: {
-    height: "40%",
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     alignItems: "center",

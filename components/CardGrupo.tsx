@@ -14,6 +14,7 @@ interface CardGrupoProps {
   descricao: string;
   bairros?: string[];
   isFavorito?: boolean;
+  isParticipando?: boolean;
   onPress?: () => void;
   onParticipar?: () => void;
   onFavoritoAlterado?: () => void;
@@ -25,6 +26,7 @@ export default function CardGrupo({
   descricao,
   bairros,
   isFavorito = false,
+  isParticipando = false,
   onPress,
   onParticipar,
   onFavoritoAlterado,
@@ -34,6 +36,14 @@ export default function CardGrupo({
   const [eParticipante, setEParticipante] = useState<boolean | null>(null);
 
   const handleAbrirChat = async () => {
+    if (isParticipando) {
+      router.push({
+        pathname: "/ChatPage" as never,
+        params: { groupId: id.toString() },
+      });
+      return;
+    }
+
     if (eParticipante === false) {
       PopupService.info(
         "Você precisa participar do grupo para acessar o chat.",
@@ -120,7 +130,7 @@ export default function CardGrupo({
           compact
           onPress={handleAbrirChat}
           loading={verificandoChat}
-          disabled={eParticipante === false}
+          disabled={!isParticipando && eParticipante === false}
         />
       </View>
 
@@ -141,7 +151,12 @@ export default function CardGrupo({
         )}
       </View>
 
-      <View style={styles.actionsContainer}>
+      <View
+        style={[
+          styles.actionsContainer,
+          isParticipando && { justifyContent: "center" },
+        ]}
+      >
         <TouchableOpacity onPress={handleFavorito}>
           <Ionicons
             name={isFavorito ? "heart" : "heart-outline"}
@@ -150,9 +165,11 @@ export default function CardGrupo({
           />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.addButton} onPress={onAddPress}>
-          <Ionicons name="add" size={26} color={Colors.branco} />
-        </TouchableOpacity>
+        {!isParticipando && (
+          <TouchableOpacity style={styles.addButton} onPress={onAddPress}>
+            <Ionicons name="add" size={26} color={Colors.branco} />
+          </TouchableOpacity>
+        )}
       </View>
     </TouchableOpacity>
   );
