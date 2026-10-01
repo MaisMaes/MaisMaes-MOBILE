@@ -1,12 +1,13 @@
 import AppText from "@/components/AppText";
 import TermosUsoModal from "@/components/TermosUsoModal";
 import { Colors, GlobalFontSize } from "@/constants/GlobalStyles";
+import FaceService, { ResultadoFacial } from "@/service/FaceService";
 import UsuarioService from "@/service/UsuarioService";
 import { CadastroRequest } from "@/service/model/CadastroRequest";
 import PopupService from "@/utils/PopupService";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import AppButton from "../AppButton";
 import Input from "../input";
 
@@ -32,6 +33,7 @@ export default function Cadastro() {
   const [aceitouTermos, setAceitouTermos] = useState(false);
   const [modalTermosVisivel, setModalTermosVisivel] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [enviando, setEnviando] = useState(false);
   const router = useRouter();
 
   const validate = (): Record<string, string> => {
@@ -62,23 +64,78 @@ export default function Cadastro() {
     return e;
   };
 
+  const confirmarVerificacaoFacial = () =>
+    new Promise<boolean>((resolve) =>
+      Alert.alert(
+        "Verificação facial",
+        "Para concluir o cadastro, tire uma selfie. A foto será enviada a um serviço externo (Face++) apenas para verificação de gênero e não fica salva no aplicativo.",
+        [
+          { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
+          { text: "Abrir câmera", onPress: () => resolve(true) },
+        ],
+        { cancelable: true, onDismiss: () => resolve(false) },
+      ),
+    );
+
+  const verificarRosto = async (): Promise<boolean> => {
+    let resultado: ResultadoFacial;
+    try {
+      resultado = await FaceService.verificarRosto();
+    } catch (error) {
+      PopupService.error(
+        error instanceof Error ? error.message : "Falha na verificação facial.",
+      );
+      return false;
+    }
+
+    switch (resultado.status) {
+      case "cancelado":
+        PopupService.info("Tire uma selfie para concluir o cadastro.");
+        return false;
+      case "sem_rosto":
+        PopupService.error("Nenhum rosto detectado. Tente novamente.");
+        return false;
+      case "multiplos_rostos":
+        PopupService.error("Apenas o seu rosto deve aparecer na foto.");
+        return false;
+      case "ok":
+        if (resultado.genero !== "Female") {
+          PopupService.error(
+            "Não foi possível validar o cadastro. Este aplicativo é destinado a mães.",
+          );
+          return false;
+        }
+        return true;
+    }
+  };
+
   const handleCadastro = async () => {
+    if (enviando) return;
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       setTimeout(() => setErrors({}), 5000);
       return;
     }
+    if (!(await confirmarVerificacaoFacial())) return;
+
+    setEnviando(true);
     try {
+      if (!(await verificarRosto())) {
+        setEnviando(false);
+        return;
+      }
       await UsuarioService.cadastrar(cadastrarData);
       PopupService.success(
         "Cadastro realizado com sucesso! Uma mensagem de ativação foi enviada para o seu email.",
       );
+      // Spinner stays on until the redirect to prevent a second submission.
       setTimeout(() => router.replace("/StartPage"), 2000);
     } catch (error: any) {
       const message =
         error?.response?.data?.error ?? "Falha no cadastro. Tente novamente.";
       PopupService.error(message);
+      setEnviando(false);
     }
   };
 
@@ -159,6 +216,7 @@ export default function Cadastro() {
         text="Enviar"
         backgroundColor={Colors.roxo}
         onPress={handleCadastro}
+        loading={enviando}
         style={{ marginTop: 20 }}
       />
       <TermosUsoModal

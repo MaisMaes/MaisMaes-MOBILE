@@ -1,5 +1,10 @@
 import { Colors, GlobalFontSize } from "@/constants/GlobalStyles";
-import { StyleSheet, TouchableOpacity, ViewStyle } from "react-native";
+import {
+    ActivityIndicator,
+    StyleSheet,
+    TouchableOpacity,
+    ViewStyle,
+} from "react-native";
 import AppText from "./AppText";
 
 interface AppButtonProps {
@@ -11,6 +16,7 @@ interface AppButtonProps {
   textColor?: string;
   style?: ViewStyle;
   disabled?: boolean;
+  loading?: boolean;
 }
 
 export default function AppButton({
@@ -22,6 +28,7 @@ export default function AppButton({
   textColor = Colors.branco,
   style,
   disabled = false,
+  loading = false,
 }: AppButtonProps) {
   return (
     <TouchableOpacity
@@ -36,11 +43,16 @@ export default function AppButton({
         disabled && styles.disabled,
       ]}
       onPress={onPress}
-      disabled={disabled}
+      disabled={disabled || loading}
+      accessibilityState={{ busy: loading, disabled: disabled || loading }}
     >
-      <AppText style={[styles.buttonText, { color: textColor }]}>
-        {text}
-      </AppText>
+      {loading ? (
+        <ActivityIndicator color={textColor} style={styles.spinner} />
+      ) : (
+        <AppText style={[styles.buttonText, { color: textColor }]}>
+          {text}
+        </AppText>
+      )}
     </TouchableOpacity>
   );
 }
@@ -57,5 +69,8 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.5,
+  },
+  spinner: {
+    height: GlobalFontSize.title * 1.4,
   },
 });
