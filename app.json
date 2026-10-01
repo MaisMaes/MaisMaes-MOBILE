@@ -46,7 +46,13 @@
       "expo-status-bar",
       "expo-web-browser",
       "expo-audio",
-      "expo-video"
+      "expo-video",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "O +Mães usa a câmera para verificar seu rosto no cadastro."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

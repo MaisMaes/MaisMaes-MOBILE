@@ -20,6 +20,7 @@ export default function Login() {
     senha: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [enviando, setEnviando] = useState(false);
   const navigate = useRouter();
   const validate = (): Record<string, string> => {
     const e: Record<string, string> = {};
@@ -34,18 +35,22 @@ export default function Login() {
   };
 
   const handleLogin = async () => {
+    if (enviando) return;
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       setTimeout(() => setErrors({}), 5000);
       return;
     }
+    setEnviando(true);
     try {
       const response: AuthResponse = await AuthService.login(loginData);
       PopupService.success("Login realizado com sucesso!");
       await TokenService.saveToken(response.token);
+      // Spinner stays on until the redirect to prevent a second submission.
       setTimeout(() => navigate.replace("/HomePage"), 2000);
     } catch (error: unknown) {
+      setEnviando(false);
       if (axios.isAxiosError(error)) {
         const status = (
           error.response?.data as Partial<AuthResponse> | undefined
@@ -100,6 +105,7 @@ export default function Login() {
         text="Login"
         backgroundColor={Colors.roxo}
         onPress={handleLogin}
+        loading={enviando}
         style={{ position: "absolute", bottom: 100 }}
       />
     </View>
