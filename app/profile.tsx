@@ -5,9 +5,12 @@ import TokenService from "@/service/TokenService";
 import UsuarioService, { UsuarioMe } from "@/service/UsuarioService";
 import PopupService from "@/utils/PopupService";
 import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 import { useEffect, useState } from "react";
 import {
     StyleSheet,
+    Alert,
+    Image,
     Text,
     TextInput,
     TouchableOpacity,
@@ -25,18 +28,28 @@ export default function Profile() {
   const [editando, setEditando] = useState(false);
   const [senha, setSenha] = useState("");
   const [usuarioOriginal, setUsuarioOriginal] = useState<Usuario | null>(null);
+  const [foto, setFoto] = useState<string | null>(null);
+  const [enviandoFoto, setEnviandoFoto] = useState(false);
 
-  async function buscarUsuario() {
-    try {
-      const data = await UsuarioService.me();
-      setNome(data.nome);
-      setEmail(data.email);
-      setTelefone(data.telefone);
-      setUsuarioOriginal(data);
-    } catch (error) {
-      console.log("Erro ao buscar usuário:", error);
-    }
+async function buscarUsuario() {
+  try {
+    const data = await UsuarioService.me();
+
+    setNome(data.nome);
+    setEmail(data.email);
+    setTelefone(data.telefone);
+    setUsuarioOriginal(data);
+
+    const urlFoto = await UsuarioService.buscarFoto();
+
+    console.log("URL DA FOTO:", urlFoto);
+    console.log("TIPO:", typeof urlFoto);
+
+    setFoto(urlFoto);
+  } catch (error) {
+    console.log("Erro ao buscar usuário:", error);
   }
+}
 
   async function atualizarUsuario() {
     try {
@@ -69,11 +82,98 @@ export default function Profile() {
     setEditando(false);
   }
 
+  async function alterarFoto() {
+  try {
+    const permissao =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permissao.granted) {
+      Alert.alert(
+        "Permissão necessária",
+        "Precisamos de acesso à galeria para escolher uma foto."
+      );
+
+      return;
+    }
+
+    const resultado =
+      await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+    if (resultado.canceled) {
+      return;
+    }
+
+    const imagemSelecionada = resultado.assets[0];
+
+    if (!usuarioOriginal) {
+      PopupService.error(
+        "Não foi possível identificar o usuário."
+      );
+
+      return;
+    }
+
+    setEnviandoFoto(true);
+
+    await UsuarioService.atualizarFoto(
+      usuarioOriginal.id,
+      imagemSelecionada.uri
+    );
+
+    const novaFoto = await UsuarioService.buscarFoto();
+
+    setFoto(novaFoto);
+
+    PopupService.success(
+      "Foto atualizada com sucesso!"
+    );
+  } catch (error) {
+    console.log("Erro ao alterar foto:", error);
+
+    PopupService.error(
+      "Não foi possível atualizar a foto."
+    );
+  } finally {
+    setEnviandoFoto(false);
+  }
+}
+
   return (
     <SafeAreaView style={styles.container}>
       <AppHeader titulo="Perfil" logo />
 
       <View style={styles.content}>
+        <View style={styles.profileImageContainer}>
+         {foto ? (
+        <Image
+          source={{ uri: foto }}
+          style={styles.profileImage}
+        />
+      ) : (
+        <View style={styles.profileImagePlaceholder}>
+          <Text style={styles.profileImagePlaceholderText}>
+            {nome
+              ? nome.charAt(0).toUpperCase()
+              : "..."}
+          </Text>
+        </View>
+      )}
+
+      <TouchableOpacity
+        style={styles.editPhotoButton}
+        onPress={alterarFoto}
+        disabled={enviandoFoto}
+      >
+        <Text style={styles.editPhotoText}>
+          {enviandoFoto ? "..." : "✎"}
+        </Text>
+      </TouchableOpacity>
+    </View>
         <Text style={styles.greeting}>Olá, {nome}</Text>
         <TextInput
           style={styles.input}
@@ -247,4 +347,53 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     color: Colors.branco,
   },
+  profileImageContainer: {
+  position: "relative",
+  marginBottom: 20,
+},
+
+profileImage: {
+  width: 120,
+  height: 120,
+  borderRadius: 60,
+  borderWidth: 3,
+  borderColor: Colors.roxo,
+},
+
+profileImagePlaceholder: {
+  width: 120,
+  height: 120,
+  borderRadius: 60,
+  backgroundColor: Colors.roxo,
+  justifyContent: "center",
+  alignItems: "center",
+},
+
+profileImagePlaceholderText: {
+  color: Colors.branco,
+  fontSize: 45,
+  fontWeight: "bold",
+},
+
+editPhotoButton: {
+  position: "absolute",
+  right: -5,
+  bottom: 0,
+  width: 38,
+  height: 38,
+  borderRadius: 19,
+  backgroundColor: Colors.roxo,
+  justifyContent: "center",
+  alignItems: "center",
+  borderWidth: 3,
+  borderColor: Colors.branco,
+},
+
+editPhotoText: {
+  color: Colors.branco,
+  fontSize: 20,
+  fontWeight: "bold",
+},
 });
+
+
