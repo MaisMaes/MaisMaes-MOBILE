@@ -1,9 +1,9 @@
 import { Colors, GlobalFontSize } from "@/constants/GlobalStyles";
 import {
-  ActivityIndicator,
-  StyleSheet,
-  TouchableOpacity,
-  ViewStyle,
+    ActivityIndicator,
+    StyleSheet,
+    TouchableOpacity,
+    ViewStyle,
 } from "react-native";
 import AppText from "./AppText";
 

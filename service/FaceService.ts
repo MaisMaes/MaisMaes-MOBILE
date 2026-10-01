@@ -46,7 +46,9 @@ class FaceService {
       const response = await fetch(this.URL, { method: "POST", body: form });
       data = await response.json();
     } catch {
-      throw new Error("Não foi possível conectar ao serviço de verificação facial.");
+      throw new Error(
+        "Não foi possível conectar ao serviço de verificação facial.",
+      );
     }
 
     if (data.error_message) {
