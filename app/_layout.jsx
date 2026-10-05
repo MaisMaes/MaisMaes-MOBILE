@@ -1,8 +1,8 @@
 import {
-    Poppins_400Regular,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
-    useFonts,
+  Poppins_400Regular,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  useFonts,
 } from "@expo-google-fonts/poppins";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -58,6 +58,14 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name="DetalheNoticiaPage"
+          options={{ animation: "ios_from_right", gestureEnabled: true }}
+        />
+        <Stack.Screen
+          name="AjudaPage"
+          options={{ animation: "ios_from_right", gestureEnabled: true }}
+        />
+        <Stack.Screen
+          name="DelegaciasPage"
           options={{ animation: "ios_from_right", gestureEnabled: true }}
         />
       </Stack>

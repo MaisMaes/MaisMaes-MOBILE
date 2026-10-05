@@ -13,7 +13,9 @@ const items: Item[] = [
   { label: "Início", icon: "home-outline", href: "/HomePage" },
   { label: "Grupos", icon: "chatbubble-outline", href: "/GrupoPage" },
   { label: "Notícias", icon: "newspaper-outline", href: "/NoticiasPage" },
+  { label: "Ajuda", icon: "notifications-outline", href: "/AjudaPage" },
   { label: "Perfil", icon: "person-outline", href: "/profile" },
+  
   
 ];
 

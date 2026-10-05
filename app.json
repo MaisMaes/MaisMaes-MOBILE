@@ -46,7 +46,14 @@
       "expo-status-bar",
       "expo-web-browser",
       "expo-audio",
-      "expo-video"
+      "expo-video",
+      "expo-router",
+        [
+          "expo-location",
+            {
+              "locationWhenInUsePermission": "Usamos sua localização para mostrar as delegacias mais próximas."
+            }
+        ]
     ],
     "experiments": {
       "typedRoutes": true
